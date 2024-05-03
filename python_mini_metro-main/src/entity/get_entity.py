@@ -4,6 +4,7 @@ from config import screen_height, screen_width
 from entity.metro import Metro
 from entity.station import Station
 from utils import get_random_position, get_random_station_shape
+from geometry.utils import distance
 
 
 def get_random_station() -> Station:
@@ -15,7 +16,15 @@ def get_random_station() -> Station:
 def get_random_stations(num: int) -> List[Station]:
     stations: List[Station] = []
     for _ in range(num):
-        stations.append(get_random_station())
+        #changed so no overlapping positions
+        new_station = get_random_station()
+        if len(stations) == 0:
+            stations.append(new_station)
+            continue
+        while any(distance(new_station.position, station.position) < 50 for station in stations):
+            new_station = get_random_station()
+            
+        stations.append(new_station)
     return stations
 
 

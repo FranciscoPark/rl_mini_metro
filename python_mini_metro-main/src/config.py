@@ -54,4 +54,4 @@ path_button_cross_width = 5
 
 # text
 score_font_size = 30
-score_display_coords = (20, 20)
+score_display_coords = (10, 10)

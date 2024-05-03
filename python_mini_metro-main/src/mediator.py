@@ -100,6 +100,7 @@ class Mediator:
             metro.draw(screen)
         for button in self.buttons:
             button.draw(screen)
+            
         text_surface = self.font.render(f"Score: {self.score}", True, (0, 0, 0))
         screen.blit(text_surface, score_display_coords)
 
