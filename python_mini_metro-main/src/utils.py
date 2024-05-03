@@ -4,7 +4,10 @@ from typing import List, Tuple
 
 import numpy as np
 
-from config import passenger_size, station_color, station_shape_type_list, station_size
+from config import (
+    passenger_size, station_color, 
+    station_shape_type_list, station_size,score_display_coords,
+    path_button_start_left, path_button_dist_to_bottom)
 from geometry.circle import Circle
 from geometry.cross import Cross
 from geometry.point import Point
@@ -12,19 +15,25 @@ from geometry.rect import Rect
 from geometry.shape import Shape
 from geometry.triangle import Triangle
 from geometry.type import ShapeType
+from geometry.utils import distance
 from type import Color
 
 
 def get_random_position(width: int, height: int) -> Point:
     padding_ratio = 0.1
-    return Point(
-        left=round(
-            width * (padding_ratio + np.random.rand() * (1 - padding_ratio * 2))
-        ),
-        top=round(
-            height * (padding_ratio + np.random.rand() * (1 - padding_ratio * 2))
-        ),
-    )
+    #so that it doesnt spawn on the button and score display
+    while(True):
+        position = Point(
+            left=round(
+                width * (padding_ratio + np.random.rand() * (1 - padding_ratio * 2))
+            ),
+            top=round(
+                height * (padding_ratio + np.random.rand() * (1 - padding_ratio * 2))
+            ),
+        )
+        if (distance(position, Point(*score_display_coords)) > 100)&(distance(position, Point(550,50)) > 100):
+            return position
+    
 
 
 def get_random_color() -> Color:
