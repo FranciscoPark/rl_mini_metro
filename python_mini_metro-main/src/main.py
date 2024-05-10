@@ -16,11 +16,14 @@ clock = pygame.time.Clock()
 
 mediator = Mediator()
 
-while True:
+running = True
+while running:
     dt_ms = clock.tick(framerate)
     mediator.increment_time(dt_ms)
     screen.fill(screen_color)
     mediator.render(screen)
+    running =mediator.is_gameover()
+
 
     # react to user interaction
     for pygame_event in pygame.event.get():
@@ -31,3 +34,6 @@ while True:
             mediator.react(event)
 
     pygame.display.flip()
+
+pygame.time.delay(1000) # 2초 딜레이 (ms기준)
+pygame.quit()

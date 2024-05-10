@@ -55,3 +55,11 @@ path_button_cross_width = 5
 # text
 score_font_size = 30
 score_display_coords = (10, 10)
+
+# gameover text
+gameover_font_size = 60
+gameover_text = "Game Over"
+gameover_text_color = (255, 0, 0)
+gameover_text_coords = (screen_width // 2, screen_height // 2)
+gameover_text_center = True
+
