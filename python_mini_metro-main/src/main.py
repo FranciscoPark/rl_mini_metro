@@ -1,6 +1,6 @@
 import pygame
 
-from config import framerate, screen_color, screen_height, screen_width
+from config import framerate, screen_color, screen_height, screen_width,start_with_3_initial_paths
 from event.convert import convert_pygame_event
 from mediator import Mediator
 
@@ -16,11 +16,18 @@ clock = pygame.time.Clock()
 
 mediator = Mediator()
 
-while True:
+running = True
+while running:
     dt_ms = clock.tick(framerate)
+    if start_with_3_initial_paths:
+        mediator.initialize_with_3_paths()
+        start_with_3_initial_paths = False
+
     mediator.increment_time(dt_ms)
     screen.fill(screen_color)
     mediator.render(screen)
+    running =mediator.is_gameover()
+
 
     # react to user interaction
     for pygame_event in pygame.event.get():
@@ -31,3 +38,6 @@ while True:
             mediator.react(event)
 
     pygame.display.flip()
+
+pygame.time.delay(1000) # 2초 딜레이 (ms기준)
+pygame.quit()

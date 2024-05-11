@@ -16,6 +16,12 @@ from config import (
     passenger_spawning_start_step,
     score_display_coords,
     score_font_size,
+    gameover_font_size,
+    gameover_text,
+    gameover_text_color,
+    gameover_text_coords,
+    gameover_text_center,
+    start_with_3_initial_paths
 )
 from entity.get_entity import get_random_stations
 from entity.metro import Metro
@@ -36,6 +42,7 @@ from ui.button import Button
 from ui.path_button import PathButton, get_path_buttons
 from utils import get_shape_from_type, hue_to_rgb
 
+
 TravelPlans = Dict[Passenger, TravelPlan]
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -50,12 +57,23 @@ class Mediator:
         self.num_paths = num_paths
         self.num_metros = num_metros
         self.num_stations = num_stations
+        self.start_with_3_initial_paths = start_with_3_initial_paths
 
         # UI
         self.path_buttons = get_path_buttons(self.num_paths)
         self.path_to_button: Dict[Path, PathButton] = {}
         self.buttons = [*self.path_buttons]
         self.font = pygame.font.SysFont("arial", score_font_size)
+
+        #gameover UI
+        self.gameover_text = gameover_text
+        self.gameover_text_color = gameover_text_color
+        self.gameover_text_coords = gameover_text_coords
+        self.gameover_text_center = gameover_text_center
+        self.gameover_font_size = gameover_font_size
+        self.gameover = False
+
+
 
         # entities
         self.stations = get_random_stations(self.num_stations)
@@ -79,6 +97,32 @@ class Mediator:
         self.is_paused = False
         self.score = 0
 
+    #gameover
+    def display_gameover(self, screen: pygame.surface.Surface) -> None:
+        gameover_font = pygame.font.SysFont("arial", self.gameover_font_size)
+        gameover_text = gameover_font.render(self.gameover_text, True, self.gameover_text_color)
+        screen.blit(gameover_text, gameover_text_coords)
+    
+    def is_gameover(self):
+        return not self.gameover
+    
+    #initialize with 3 paths
+    def initialize_with_3_paths(self):
+        #randomly choose 3 stations
+        stations = random.sample(self.stations, 3)
+        for station in stations:
+            self.start_path_on_station(station)
+            #randomly choose 1 to connect
+            station_to_connect = random.choice([x for x in self.stations if x not in stations])
+            self.add_station_to_path(station_to_connect)
+            self.end_path_on_station(station_to_connect)
+        
+
+
+
+
+
+
     def assign_paths_to_buttons(self):
         for path_button in self.path_buttons:
             path_button.remove_path()
@@ -91,6 +135,9 @@ class Mediator:
             self.path_to_button[path] = button
 
     def render(self, screen: pygame.surface.Surface) -> None:
+        if self.gameover == True:
+            self.display_gameover(screen)
+            return
         for idx, path in enumerate(self.paths):
             path_order = idx - round(self.num_paths / 2)
             path.draw(screen, path_order)
@@ -103,6 +150,7 @@ class Mediator:
             
         text_surface = self.font.render(f"Score: {self.score}", True, (0, 0, 0))
         screen.blit(text_surface, score_display_coords)
+        
 
     def react_mouse_event(self, event: MouseEvent):
         entity = self.get_containing_entity(event.position)
@@ -261,6 +309,7 @@ class Mediator:
         )
 
     def spawn_passengers(self):
+        #gameover
         for station in self.stations:
             station_types = self.get_station_shape_types()
             other_station_shape_types = [
@@ -274,6 +323,12 @@ class Mediator:
             if station.has_room():
                 station.add_passenger(passenger)
                 self.passengers.append(passenger)
+            else:
+                #gameover
+                self.gameover = True
+                break
+                
+
 
     def increment_time(self, dt_ms: int) -> None:
         if self.is_paused:
@@ -292,6 +347,9 @@ class Mediator:
         # spawn passengers
         if self.is_passenger_spawn_time():
             self.spawn_passengers()
+            #if gameover
+            if self.gameover == True:
+                return
             self.steps_since_last_spawn = 0
 
         self.find_travel_plan_for_passengers()
