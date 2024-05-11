@@ -63,3 +63,6 @@ gameover_text_color = (255, 0, 0)
 gameover_text_coords = (screen_width // 2, screen_height // 2)
 gameover_text_center = True
 
+#startwith 3initial paths
+start_with_3_initial_paths = True
+

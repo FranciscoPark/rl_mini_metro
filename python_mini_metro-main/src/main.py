@@ -1,6 +1,6 @@
 import pygame
 
-from config import framerate, screen_color, screen_height, screen_width
+from config import framerate, screen_color, screen_height, screen_width,start_with_3_initial_paths
 from event.convert import convert_pygame_event
 from mediator import Mediator
 
@@ -19,6 +19,10 @@ mediator = Mediator()
 running = True
 while running:
     dt_ms = clock.tick(framerate)
+    if start_with_3_initial_paths:
+        mediator.initialize_with_3_paths()
+        start_with_3_initial_paths = False
+
     mediator.increment_time(dt_ms)
     screen.fill(screen_color)
     mediator.render(screen)

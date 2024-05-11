@@ -20,7 +20,8 @@ from config import (
     gameover_text,
     gameover_text_color,
     gameover_text_coords,
-    gameover_text_center 
+    gameover_text_center,
+    start_with_3_initial_paths
 )
 from entity.get_entity import get_random_stations
 from entity.metro import Metro
@@ -56,6 +57,7 @@ class Mediator:
         self.num_paths = num_paths
         self.num_metros = num_metros
         self.num_stations = num_stations
+        self.start_with_3_initial_paths = start_with_3_initial_paths
 
         # UI
         self.path_buttons = get_path_buttons(self.num_paths)
@@ -103,6 +105,21 @@ class Mediator:
     
     def is_gameover(self):
         return not self.gameover
+    
+    #initialize with 3 paths
+    def initialize_with_3_paths(self):
+        #randomly choose 3 stations
+        stations = random.sample(self.stations, 3)
+        for station in stations:
+            self.start_path_on_station(station)
+            #randomly choose 1 to connect
+            station_to_connect = random.choice([x for x in self.stations if x not in stations])
+            self.add_station_to_path(station_to_connect)
+            self.end_path_on_station(station_to_connect)
+        
+
+
+
 
 
 
