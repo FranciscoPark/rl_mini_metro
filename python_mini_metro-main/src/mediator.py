@@ -21,7 +21,8 @@ from config import (
     gameover_text_color,
     gameover_text_coords,
     gameover_text_center,
-    start_with_3_initial_paths
+    start_with_3_initial_paths,
+    station_shape_type_list
 )
 from entity.get_entity import get_random_stations
 from entity.metro import Metro
@@ -85,6 +86,9 @@ class Mediator:
             color = hue_to_rgb(i / (num_paths + 1))
             self.path_colors[color] = False  # not taken
         self.path_to_color: Dict[Path, Color] = {}
+        self.color_name: Dict[Color, str] = {(255.0, 0.0, 0.0): 'red', (0.0, 255.0, 255.0): 'blue', (127.5, 255.0, 0.0): 'green'}
+        
+        
 
         # status
         self.time_ms = 0
@@ -486,3 +490,53 @@ class Mediator:
                             break
                     if should_set_null_path:
                         self.travel_plans[passenger] = TravelPlan([])
+
+
+    def count_passengers_by_type(self, station: Station) -> Dict:
+        station_shape_type_list_str = [str(shape_type) for shape_type in station_shape_type_list]
+        count = dict(zip(station_shape_type_list_str, [0] * len(station_shape_type_list)))
+        for passenger in station.passengers:
+            shape = str(passenger.destination_shape.type)
+            if shape in count:
+                count[shape] += 1
+        return count
+    
+    
+    
+    
+    def save_state(self) -> Dict:
+        state = {
+            'step': self.steps,
+            'num_stations': self.num_stations,
+            'station_ids': [station.id for station in self.stations],
+            'station_shapes': [str(station.shape.type) for station in self.stations],
+            'station_passengers': {station.id: self.count_passengers_by_type(station) for station in self.stations},
+            'paths': {self.color_name[path.color] : [station.id for station in path.stations] for path in self.paths},
+            'path_color': [path.color for path in self.paths],
+            'paths_adj_matrix': {self.color_name[path.color]: self.adjacency_matrix(path) for path in self.paths},
+            'score': self.score 
+        }
+        return state
+    
+
+
+    
+    def adjacency_matrix(self, path: Path):
+        """ Creates an adjacency matrix for a given path"""
+
+        # initiate matrix with zeros for all stations in game
+        adjacency_matrix = [[0] * len(self.stations) for _ in range(len(self.stations))]
+        station_id_to_index = {station.id: i for i, station in enumerate(self.stations)}
+        
+        # fill in adjacency matrix 
+        for i in range(len(path.stations) - 1):
+            start_station = path.stations[i]
+            next_station = path.stations[i + 1]
+            start_index = station_id_to_index[start_station.id]
+            next_index = station_id_to_index[next_station.id]
+            adjacency_matrix[start_index][next_index] = 1
+            adjacency_matrix[next_index][start_index] = 1
+        return adjacency_matrix
+
+
+
