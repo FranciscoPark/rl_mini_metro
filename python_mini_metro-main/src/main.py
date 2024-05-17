@@ -19,7 +19,14 @@ clock = pygame.time.Clock()
 mediator = Mediator()
 game_states = []
 
+# Configurations
 running = True
+save_states = True
+human_player = False
+enable_graphics = True
+# assert screen is shown for human players
+
+
 while running:
     dt_ms = clock.tick(framerate)
     if start_with_3_initial_paths:
@@ -27,13 +34,14 @@ while running:
         start_with_3_initial_paths = False
 
     mediator.increment_time(dt_ms)
-    screen.fill(screen_color)
-    mediator.render(screen)
-    running =mediator.is_gameover()
+    if enable_graphics:
+        screen.fill(screen_color)
+        mediator.render(screen)
+    running = mediator.is_gameover()
 
 
      # save game state in dict
-    if mediator.steps % 100 == 0:
+    if mediator.steps % 1000 == 0 and save_states:
         current_state = mediator.save_state()
         if len(game_states) > 0:
 
@@ -58,24 +66,34 @@ while running:
             game_states[-1]['action'] = new_links # This is just a placeholder/proxy for the actual action space we will define later
             
         game_states.append(current_state)
-
+        print(current_state['score'])
+        print(current_state['station_passengers'])
+   
+   
     # react to user interaction
-    for pygame_event in pygame.event.get():
-        if pygame_event.type == pygame.QUIT:
+    if human_player:
+        for pygame_event in pygame.event.get():
+            if pygame_event.type == pygame.QUIT:
+
+                raise SystemExit
+            else:
+                event = convert_pygame_event(pygame_event)
+                mediator.react(event)
+
+        pygame.display.flip()
+    else:
+        # add station
+        if mediator.steps >= 100 and mediator.steps < 200:
+            mediator.agent_add_station_to_path(mediator.paths[0],mediator.stations[0])
+
+
+        if enable_graphics:
+            for pygame_event in pygame.event.get():
+                if pygame_event.type == pygame.QUIT:
+                    raise SystemExit
+            pygame.display.flip()
             
-            # Save game states to a JSON file
-            current_datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-            filename = f"{current_datetime}.json"
-            with open(filename, 'w') as file:
-                json.dump(game_states, file)
 
-            raise SystemExit
-        else:
-            event = convert_pygame_event(pygame_event)
-            mediator.react(event)
-
-    pygame.display.flip()
-    print(mediator.is_gameover())
 print("-------- Got here")
 pygame.time.delay(1000) # 2초 딜레이 (ms기준)
 pygame.quit()
