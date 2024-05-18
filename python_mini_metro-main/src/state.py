@@ -8,7 +8,7 @@ def get_passengers_on_station(information)->np.array:
     return matrix
 
 def get_station_shapes(information)->np.array:
-    #10 stations,4 shapes for now
+    #10 stations,4 shapes for now, one-hot encoding
     matrix = np.zeros((10, 4), dtype=int)
     shape_order = ['ShapeType.RECT', 'ShapeType.CIRCLE', 'ShapeType.TRIANGLE', 'ShapeType.CROSS']
     #print(information['station_shapes'])
