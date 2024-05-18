@@ -24,7 +24,7 @@ game_states = []
 # Configurations
 running = True
 save_states = True
-human_player = False
+human_player = True
 enable_graphics = True
 # assert screen is shown for human players
 
