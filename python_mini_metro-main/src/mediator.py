@@ -197,15 +197,11 @@ class Mediator:
             if event.key == pygame.K_SPACE:
                 self.is_paused = not self.is_paused
 
-    # def rl_decision(self, game_states):
-        # game_states: score, reward, paths_adj_matrix, station_ids, ...
-
     def react(self, event: Event | None):
         if isinstance(event, MouseEvent):
             self.react_mouse_event(event)
         elif isinstance(event, KeyboardEvent):
             self.react_keyboard_event(event)
-        # self.rl_decision(game_states)
 
     def get_containing_entity(self, position: Point):
         for station in self.stations:

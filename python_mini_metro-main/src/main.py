@@ -94,15 +94,6 @@ while running:
             pygame.display.flip()
             
 
-            raise SystemExit
-        else:
-            event = convert_pygame_event(pygame_event)
-            mediator.react(event)
-            # mediator.react(game_states)
-
-    pygame.display.flip()
-    print(mediator.is_gameover())
-    
 print("-------- Got here")
 pygame.time.delay(1000) # 2초 딜레이 (ms기준)
 pygame.quit()
