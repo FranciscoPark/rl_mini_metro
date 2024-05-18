@@ -518,11 +518,12 @@ class Mediator:
         }
         return state
     
-    def matrix_state(self):
-        state = self.save_state()
-        #print(get_passengers_on_station(state))
-        print(get_station_shapes(state))
-        #print(get_connected_stations(state))
+    #for dqn
+    # def matrix_state(self):
+    #     state = self.save_state()
+    #     #print(get_passengers_on_station(state))
+    #     print(get_station_shapes(state))
+    #     #print(get_connected_stations(state))
 
         
 
