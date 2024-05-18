@@ -22,7 +22,7 @@ game_states = []
 # Configurations
 running = True
 save_states = True
-human_player = False
+human_player = True
 enable_graphics = True
 # assert screen is shown for human players
 
@@ -66,8 +66,7 @@ while running:
             game_states[-1]['action'] = new_links # This is just a placeholder/proxy for the actual action space we will define later
             
         game_states.append(current_state)
-        print(current_state['score'])
-        print(current_state['station_passengers'])
+        
    
    
     # react to user interaction
@@ -101,9 +100,7 @@ while running:
             # mediator.react(game_states)
 
     pygame.display.flip()
-    print(mediator.is_gameover())
     
-print("-------- Got here")
 pygame.time.delay(1000) # 2초 딜레이 (ms기준)
 pygame.quit()
 
