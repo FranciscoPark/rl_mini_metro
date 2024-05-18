@@ -503,15 +503,17 @@ class Mediator:
     
     
     
-    
+    # + stations, paths:store paths with its path instance as key
     def save_state(self) -> Dict:
         state = {
             'step': self.steps,
             'num_stations': self.num_stations,
+            'stations': [station for station in self.stations],
             'station_ids': [station.id for station in self.stations],
             'station_shapes': [str(station.shape.type) for station in self.stations],
             'station_passengers': {station.id: self.count_passengers_by_type(station) for station in self.stations},
-            'paths': {self.color_name[path.color] : [station.id for station in path.stations] for path in self.paths},
+            'paths': {path : [station.id for station in path.stations] for path in self.paths},
+            'paths_colorname': {self.color_name[path.color] : [station.id for station in path.stations] for path in self.paths},
             'path_color': [path.color for path in self.paths],
             'paths_adj_matrix': {self.color_name[path.color]: self.adjacency_matrix(path) for path in self.paths},
             'score': self.score 
@@ -542,10 +544,10 @@ class Mediator:
 
 
     def agent_add_station_to_path(self, path: Path, station_to_add: Station, add_last=True) -> None:
-        
         # delete path
-        self.remove_path(path)
-        
+        if path in self.path_to_button:
+            self.remove_path(path)
+
         # add station to path
         if add_last:
             self.start_path_on_station(path.stations[0])

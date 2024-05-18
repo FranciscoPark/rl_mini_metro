@@ -1,55 +1,63 @@
 
 import pygame
+import numpy as np
 
 from mediator import Mediator
+from state import *
 import random
 
+from entity.passenger import Passenger
+from entity.path import Path
+from entity.station import Station
+
+mediator = Mediator()
+
 class Agent:
-    def __init__(self, num_paths, stations, paths):
-        # Initialize Q-table, state, and action space
-        self.q_table = {}
-        # self.state_space = self.define_state_space()
+    def __init__(self, state, epsilon=0.1):
+        self.state = state
+        # entities
+        self.stations = self.state['stations']
+        self.paths = self.state['paths'] 
+        
+        self.station_passengers = self.state['station_passengers']
+        self.station_shapes = self.state['station_shapes']
+        self.paths_adj_matrix = self.state['paths_adj_matrix'] # only direct connection
+        
+        # Q-table, state, and action space
         self.action_space = self.define_action_space()
-        self.epsilon = 0.1  # Exploration rate
-        # self.alpha = 0.1  # Learning rate
-        # self.gamma = 0.9  # Discount factor
+        self.q_table = {action: 0 for action in self.action_space}
+
+        self.epsilon = epsilon  # Exploration rate
         
     def define_action_space(self):
         actions = []
-        for path in self.num_paths:
-            for station in self.stations:
-                # exclude current station / already connected stations ??
-                actions.append((path, station)) # draw line to a station using a path 
+        for station in self.stations:
+            for path in self.paths.keys():
+                # exclude stations already in the path ?
+                if station.id not in self.paths[path]:
+                    actions.append((path, station)) # action to draw line to a station using a path 
         return actions
     
     def compute_possible_deliveries(self):
-        delivery_count = {'action': 0 for action in self.action_space}
+        delivery_count = {action: 0 for action in self.action_space}
         
-        for path, station in self.action_space:
-            # possible path that added station to current path.station (not actually update the path)
-            new_paths = self.paths.copy() 
-            new_paths.add_station_to_path(station)
-            new_paths.end_path_on_station(station)
+        for action_idx, (path, station) in enumerate(self.action_space):
+            station_idx = action_idx//len(self.paths)
             
-            for passenger in station.passengers:
-                for target_station in self.stations:                    
-                    if self.is_connected(station, target_station, new_paths) and passenger.destination == target_station.shape.type:
-                        delivery_count[(path, station)] += 1
-                        break # to prevent counting twice for the same passenger
+            # for passenger in station.passengers:
+            connected_matrix = get_connected_stations_plus(self.state, path, station)
+            connected_idcs = np.argwhere(connected_matrix==1)
+            
+            for connected_idx in connected_idcs:
+                station_from = self.stations[connected_idx[0]]
+                station_to_idx = connected_idx[1]
+                delivery_count[(path, station)] += self.station_passengers[station_from.id][self.station_shapes[station_to_idx]]
+
+            self.paths[path].remove(station.id)
         
         return delivery_count
 
-    def is_connected(self, station_a, station_b, updated_paths):        
-        for path in updated_paths:
-            # adj_mat = adjacency_matrix(path) 
-            # if adj_mat[a_idx][b_idx]==1:
-                # return True
-            # both station in the same path
-            if station_a in path.stations and station_b in path.stations:
-                    return True
-        return False
-    
-    def choose_action(self): # single state: current station agent is in
+    def choose_action(self): 
         if random.uniform(0, 1) < self.epsilon:
             # Explore: choose a random action
             return random.choice(self.action_space)
@@ -58,21 +66,18 @@ class Agent:
             self.q_table = self.compute_possible_deliveries()
             return max(self.q_table, key=self.q_table.get)
 
-    def auto_decision_maker(self):
-        # Choose an action
-        action = self.choose_action()
+
+    # def auto_decision_maker(self):
+    #     # Choose an action
+    #     action = self.choose_action()
         
-        # Execute the action and get the next state
-        action[0].add_station(action[1])
-
-        ## will add more options for action
-        # if action == "modify_connection":
-        #     self.modify_connection()
-        # elif action == "delete_connection":
-        #     self.delete_connection()
-        # elif action == "observe":
-        #     pass  # Do nothing
-
-# fuse to mediator.react() function
-agent = Agent(num_paths, stations, paths)
-agent.auto_decision_maker()
+    #     # Execute the action and get the next state
+    #     mediator.agent_add_station_to_path(action[0],action[1])
+        
+    #     # will add more options for action
+    #     if action == "modify_connection":
+    #         self.modify_connection()
+    #     elif action == "delete_connection":
+    #         self.delete_connection()
+    #     elif action == "observe":
+    #         pass  # Do nothing

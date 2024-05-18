@@ -3,6 +3,8 @@ import pygame
 from config import framerate, screen_color, screen_height, screen_width,start_with_3_initial_paths
 from event.convert import convert_pygame_event
 from mediator import Mediator
+from rl_agent import Agent
+
 import json
 import datetime
 
@@ -34,15 +36,21 @@ while running:
         start_with_3_initial_paths = False
 
     mediator.increment_time(dt_ms)
+    
     if enable_graphics:
         screen.fill(screen_color)
         mediator.render(screen)
+        
     running = mediator.is_gameover()
 
 
      # save game state in dict
     if mediator.steps % 1000 == 0 and save_states:
         current_state = mediator.save_state()
+        
+        # Object of type not JSON serializable
+        current_state.pop('stations')
+        current_state.pop('paths')
         if len(game_states) > 0:
 
             # compute reward and action
@@ -67,7 +75,7 @@ while running:
             
         game_states.append(current_state)
         print(current_state['score'])
-        print(current_state['station_passengers'])
+        # print(current_state['station_passengers'])
    
    
     # react to user interaction
@@ -83,10 +91,18 @@ while running:
         pygame.display.flip()
     else:
         # add station
-        if mediator.steps >= 100 and mediator.steps < 200:
-            mediator.agent_add_station_to_path(mediator.paths[0],mediator.stations[0])
+        # if mediator.steps >= 100 and mediator.steps < 200:
+        #     mediator.agent_add_station_to_path(mediator.paths[0],mediator.stations[0])
+        
+        # adjust numbers = time for decision 
+        if mediator.steps%1000 == 20:
 
-
+            # mediator.matrix_state()
+            state = mediator.save_state()
+            agent = Agent(state, 0.1) # input state and Exploration rate
+            action = agent.choose_action()
+            mediator.agent_add_station_to_path(action[0],action[1])
+                    
         if enable_graphics:
             for pygame_event in pygame.event.get():
                 if pygame_event.type == pygame.QUIT:
