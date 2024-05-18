@@ -3,7 +3,7 @@ from __future__ import annotations
 import pprint
 import random
 from typing import Dict, List
-
+from state import get_passengers_on_station, get_station_shapes, get_connected_stations
 import pygame
 
 from config import (
@@ -517,6 +517,15 @@ class Mediator:
             'score': self.score 
         }
         return state
+    
+    def matrix_state(self):
+        state = self.save_state()
+        #print(get_passengers_on_station(state))
+        print(get_station_shapes(state))
+        #print(get_connected_stations(state))
+
+        
+
     
 
 

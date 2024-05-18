@@ -36,6 +36,7 @@ while running:
         screen.fill(screen_color)
         mediator.render(screen)
     running = mediator.is_gameover()
+    mediator.matrix_state()
 
    
     for pygame_event in pygame.event.get():
