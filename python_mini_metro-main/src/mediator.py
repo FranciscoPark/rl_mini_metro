@@ -505,8 +505,7 @@ class Mediator:
                 count[shape] += 1
         return count
     
-    
-    
+
     
     def save_state(self) -> Dict:
         state = {
