@@ -544,3 +544,26 @@ class Mediator:
 
 
 
+
+    def agent_add_station_to_path(self, path: Path, station_to_add: Station, add_last=True) -> None:
+        
+        # delete path
+        self.remove_path(path)
+        
+        # add station to path
+        if add_last:
+            self.start_path_on_station(path.stations[0])
+            for station in path.stations[1:]:
+                self.add_station_to_path(station)
+            self.end_path_on_station(station_to_add)
+
+        else: # add first
+            self.start_path_on_station(station_to_add)
+            for station in path.stations[:-1]:
+                self.add_station_to_path(station)
+            self.end_path_on_station(path.stations[-1])
+    
+    
+    def available_actions(self):
+        """ Returns the available actions for the current state"""
+        pass
