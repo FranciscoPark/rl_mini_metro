@@ -32,9 +32,10 @@ class Agent:
 
     #testing new function    
     def print_state(self):
-        print(self.paths_with_colors)
-        print(self.paths)
-        #print(make_station_index(self.state))
+        print(self.state['paths'])
+        print(get_connected_stations(self.state))
+        
+        
 
     def define_action_space(self):
         actions = []
@@ -116,6 +117,7 @@ class Agent:
     
     def choose_greedy_action(self)->tuple:
         results = self.get_maximum_delivery_route()
+        # print(results)
         return results['path'], results['connected_station'], results['add_last']
 
     def choose_action(self): 

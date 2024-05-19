@@ -1,5 +1,6 @@
 import numpy as np
 
+#checked
 def get_passengers_on_station(information)->np.array:
     #10 stations,4 shapes for now
     matrix = np.zeros((10, 4), dtype=int)
@@ -7,6 +8,7 @@ def get_passengers_on_station(information)->np.array:
         matrix[i] = [shapes['ShapeType.RECT'], shapes['ShapeType.CIRCLE'], shapes['ShapeType.TRIANGLE'], shapes['ShapeType.CROSS']]
     return matrix
 
+#checked
 def get_station_shapes(information)->np.array:
     #10 stations,4 shapes for now, one-hot encoding
     matrix = np.zeros((10, 4), dtype=int)
@@ -16,6 +18,7 @@ def get_station_shapes(information)->np.array:
         matrix[i, shape_order.index(station)] = 1
     return matrix
 
+#checked
 def make_station_index(information)->dict:
     station_index = {station: idx for idx, station in enumerate(information['station_passengers'].keys())}
     return station_index
@@ -28,13 +31,15 @@ def get_connected_stations(information)->np.array:
     #10 stations,10 stations
     matrix = np.zeros((10, 10), dtype=int)
     station_index = make_station_index(information)
+
     for color, stations in information['paths'].items():
-        if len(stations) == 2:
+        
+        if len(stations) >= 2:
             idx1 = station_index[stations[0]]
             idx2 = station_index[stations[1]]
             matrix[idx1, idx2] = 1
             matrix[idx2, idx1] = 1
-
+    
     #check mutual connection
     for idx,row in enumerate(matrix):
        for y, value in enumerate(row):
@@ -57,7 +62,7 @@ def get_connected_stations_plus(information, added_path, added_station)->np.arra
         information['paths'][added_path] = added_station.id
         
     for color, stations in information['paths'].items():
-        if isinstance(stations, list) and len(stations) == 2:
+        if isinstance(stations, list) and len(stations) >= 2:
             idx1 = station_index[stations[0]]
             idx2 = station_index[stations[1]]
             matrix[idx1, idx2] = 1
@@ -98,10 +103,12 @@ def calculate_score(information,path,start_station,connected_station)->int:
 
 
 
+
 def get_connected_shape(information)->np.array:
     #10 stations, 4 shapes
     matrix = get_station_shapes(information)
     adj_matrix = get_connected_stations(information)
+    
     
     for idx,row in enumerate(adj_matrix):
         for y, value in enumerate(row):

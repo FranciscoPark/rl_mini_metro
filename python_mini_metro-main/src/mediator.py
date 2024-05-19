@@ -358,7 +358,7 @@ class Mediator:
             if self.gameover == True:
                 return
             self.steps_since_last_spawn = 0
-
+        
         self.find_travel_plan_for_passengers()
         self.move_passengers()
         #print(self.save_state())
