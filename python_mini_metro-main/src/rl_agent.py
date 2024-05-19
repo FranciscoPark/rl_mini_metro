@@ -67,6 +67,13 @@ class Agent:
     
     def compute_maximum_delivery_route(self)->list:
         results = []
+        weights = {}
+        
+        # calculate weight vector for each station
+        for station in self.stations:
+            weights[station.id] = 1/(count_station_in_path(self.paths, station.id)+1e-10)
+        print(weights)
+        
         # for each color, calculate possible connections
         for path, stations in self.paths.items():
             if len(stations) > 1:
@@ -79,6 +86,7 @@ class Agent:
                         add_on_last= self.calculate_delivery_score(path,last_station,station)
                         results.append({
                         'score': add_on_first,
+                        'weighted_score': add_on_first * weights[station.id],
                         'path': path,
                         'start_station': first_station,
                         'connected_station': station,
@@ -86,6 +94,7 @@ class Agent:
                     })
                         results.append({
                             'score': add_on_last,
+                            'weighted_score': add_on_last * weights[station.id],
                             'path': path,
                             'start_station': last_station,
                             'connected_station': station,
@@ -93,12 +102,13 @@ class Agent:
                         })
         return results
     
-    def get_maximum_delivery_route(self)->dict:
+    def get_maximum_delivery_route(self)->dict:        
         results = self.compute_maximum_delivery_route()
         #{'score': 15, 'path': 'path_a', 'start_station': 'Station-C', 
         #'connected_station': 'Station-D'}
-        return max(results, key=lambda x: x['score'])
-    
+        # return max(results, key=lambda x: x['score'])
+        return max(results, key=lambda x: x['weighted_score'])
+
     def calculate_delivery_score(self,path, start_station, connected_station)->int:
         #connected on last or first is not considered here.
         return calculate_score(self.state, path, start_station, connected_station)

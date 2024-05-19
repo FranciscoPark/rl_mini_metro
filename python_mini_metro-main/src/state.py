@@ -124,6 +124,13 @@ def scaling_down(matrix):
                 matrix[idx][y] = 1
     return matrix
                 
-
-
+def count_station_in_path(paths, target_station_id):
+    count = 0
+    
+    for station_ids in paths.values():
+        for station_id in station_ids:
+            if station_id == target_station_id:
+                count += 1
+    
+    return count
 

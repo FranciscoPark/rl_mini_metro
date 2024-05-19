@@ -367,7 +367,7 @@ class Mediator:
         #greedy agent
         if greedy_agent:
             #steps for graphical display, steps for agent to choose action
-            if self.steps%500 == 10:
+            if self.steps%1000 == 10:
                 state = self.save_state()
                 agent = Agent(state, 0) # input state and Exploration rate
                 #agent.print_state()
