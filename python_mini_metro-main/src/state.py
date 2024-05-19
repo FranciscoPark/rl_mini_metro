@@ -85,7 +85,7 @@ def calculate_score(information,path,start_station,connected_station)->int:
 
     matrix = scaling_down(matrix)
     #above would generate 10*4 matrix, that m is station,n is connected shapes
-
+    
     passenger_matrix = get_passengers_on_station(information)
     score = 0
     for idx,row in enumerate(passenger_matrix):
@@ -117,6 +117,13 @@ def scaling_down(matrix):
                 matrix[idx][y] = 1
     return matrix
                 
-
-
+def count_station_in_path(paths, target_station_id):
+    count = 0
+    
+    for station_ids in paths.values():
+        for station_id in station_ids:
+            if station_id == target_station_id:
+                count += 1
+    
+    return count
 
