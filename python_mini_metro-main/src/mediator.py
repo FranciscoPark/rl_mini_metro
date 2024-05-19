@@ -501,14 +501,8 @@ class Mediator:
                 count[shape] += 1
         return count
     
-<<<<<<< HEAD
-    
-    
-    # + stations, paths:store paths with its path instance as key
-=======
 
     
->>>>>>> 2ba4b7a61e3ef589652b44cbd02c36eab5711338
     def save_state(self) -> Dict:
         state = {
             'step': self.steps,
