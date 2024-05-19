@@ -354,12 +354,14 @@ class Mediator:
         self.find_travel_plan_for_passengers()
         self.move_passengers()
         
+        
         #greedy agent
         if greedy_agent:
             #steps for graphical display, steps for agent to choose action
             if self.steps%1000 == 10:
                 state = self.save_state()
                 agent = Agent(state, 0) # input state and Exploration rate
+                agent.print_state()
                 action = agent.choose_action()
                 self.agent_add_station_to_path(action[0],action[1])
 

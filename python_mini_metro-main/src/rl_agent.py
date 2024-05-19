@@ -28,7 +28,11 @@ class Agent:
         self.q_table = {action: 0 for action in self.action_space}
 
         self.epsilon = epsilon  # Exploration rate
-        
+
+    #testing new function    
+    # def print_state(self):
+    #     print(get_connected_shape(self.state))
+    
     def define_action_space(self):
         actions = []
         for station in self.stations:

@@ -47,6 +47,7 @@ while running:
         mediator.render(screen)
         
     running = mediator.is_gameover()
+    
 
     # react to user interaction
     if human_player:

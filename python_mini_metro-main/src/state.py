@@ -72,3 +72,26 @@ def get_connected_stations_plus(information, added_path, added_station)->np.arra
                             matrix[idx][t] = 1
                     
     return matrix
+
+def get_connected_shape(information)->np.array:
+    #10 stations, 4 shapes
+    matrix = get_station_shapes(information)
+    adj_matrix = get_connected_stations(information)
+    
+    for idx,row in enumerate(adj_matrix):
+        for y, value in enumerate(row):
+            if value == 1:
+                matrix[idx] += matrix[y]
+    return scaling_down(matrix)
+
+#if any element in matrix is bigger than 1, change it down to 1
+def scaling_down(matrix):
+    for idx,row in enumerate(matrix):
+        for y, value in enumerate(row):
+            if value > 1:
+                matrix[idx][y] = 1
+    return matrix
+                
+
+
+
