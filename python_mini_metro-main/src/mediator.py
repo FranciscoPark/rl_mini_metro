@@ -3,7 +3,7 @@ from __future__ import annotations
 import pprint
 import random
 from typing import Dict, List
-
+from rl_agent import Agent
 import pygame
 
 from config import (
@@ -22,7 +22,8 @@ from config import (
     gameover_text_coords,
     gameover_text_center,
     start_with_3_initial_paths,
-    station_shape_type_list
+    station_shape_type_list,
+    greedy_agent
 )
 from entity.get_entity import get_random_stations
 from entity.metro import Metro
@@ -121,12 +122,6 @@ class Mediator:
             self.add_station_to_path(station_to_connect)
             self.end_path_on_station(station_to_connect)
         
-
-
-
-
-
-
     def assign_paths_to_buttons(self):
         for path_button in self.path_buttons:
             path_button.remove_path()
@@ -358,6 +353,17 @@ class Mediator:
 
         self.find_travel_plan_for_passengers()
         self.move_passengers()
+        
+        #greedy agent
+        if greedy_agent:
+            #steps for graphical display, steps for agent to choose action
+            if self.steps%1000 == 10:
+                state = self.save_state()
+                agent = Agent(state, 0) # input state and Exploration rate
+                action = agent.choose_action()
+                self.agent_add_station_to_path(action[0],action[1])
+
+
 
     def move_passengers(self) -> None:
         for metro in self.metros:

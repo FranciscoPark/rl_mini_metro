@@ -66,3 +66,10 @@ gameover_text_center = True
 #startwith 3initial paths
 start_with_3_initial_paths = True
 
+#other settings
+# Configurations
+running = True
+save_states = False
+human_player = False
+enable_graphics = True
+greedy_agent = True

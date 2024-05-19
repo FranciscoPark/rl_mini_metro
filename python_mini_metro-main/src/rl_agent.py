@@ -2,7 +2,7 @@
 import pygame
 import numpy as np
 
-from mediator import Mediator
+
 from state import *
 import random
 
@@ -10,7 +10,7 @@ from entity.passenger import Passenger
 from entity.path import Path
 from entity.station import Station
 
-mediator = Mediator()
+
 
 class Agent:
     def __init__(self, state, epsilon=0.1):
