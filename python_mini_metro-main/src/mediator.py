@@ -3,8 +3,10 @@ from __future__ import annotations
 import pprint
 import random
 from typing import Dict, List
-
+from rl_agent import Agent
 import pygame
+
+import numpy as np
 
 from config import (
     num_metros,
@@ -22,7 +24,8 @@ from config import (
     gameover_text_coords,
     gameover_text_center,
     start_with_3_initial_paths,
-    station_shape_type_list
+    station_shape_type_list,
+    greedy_agent
 )
 from entity.get_entity import get_random_stations
 from entity.metro import Metro
@@ -52,6 +55,10 @@ class Mediator:
     def __init__(self) -> None:
         pygame.font.init()
 
+        # set random seed
+        np.random.seed(42)
+        random.seed(42)
+        
         # configs
         self.passenger_spawning_step = passenger_spawning_start_step
         self.passenger_spawning_interval_step = passenger_spawning_interval_step
@@ -82,10 +89,12 @@ class Mediator:
         self.paths: List[Path] = []
         self.passengers: List[Passenger] = []
         self.path_colors: Dict[Color, bool] = {}
+        
         for i in range(num_paths):
             color = hue_to_rgb(i / (num_paths + 1))
             self.path_colors[color] = False  # not taken
         self.path_to_color: Dict[Path, Color] = {}
+    
         self.color_name: Dict[Color, str] = {(255.0, 0.0, 0.0): 'red', (0.0, 255.0, 255.0): 'blue', (127.5, 255.0, 0.0): 'green'}
         
         
@@ -121,12 +130,6 @@ class Mediator:
             self.add_station_to_path(station_to_connect)
             self.end_path_on_station(station_to_connect)
         
-
-
-
-
-
-
     def assign_paths_to_buttons(self):
         for path_button in self.path_buttons:
             path_button.remove_path()
@@ -358,6 +361,24 @@ class Mediator:
 
         self.find_travel_plan_for_passengers()
         self.move_passengers()
+        #print(self.save_state())
+        
+        
+        #greedy agent
+        if greedy_agent:
+            #steps for graphical display, steps for agent to choose action
+            if self.steps%500 == 10:
+                state = self.save_state()
+                agent = Agent(state, 0) # input state and Exploration rate
+                #agent.print_state()
+                action = agent.choose_action()
+                #print(self.path_to_color)
+                #print(action)
+                #self.agent_add_station_to_path(action[0],action[1])
+                # action = agent.choose_greedy_action()
+                self.agent_add_station_to_path(action[0],action[1],action[2])
+
+
 
     def move_passengers(self) -> None:
         for metro in self.metros:
@@ -501,9 +522,6 @@ class Mediator:
                 count[shape] += 1
         return count
     
-    
-    
-    # + stations, paths:store paths with its path instance as key
 
     
     def save_state(self) -> Dict:

@@ -72,3 +72,51 @@ def get_connected_stations_plus(information, added_path, added_station)->np.arra
                             matrix[idx][t] = 1
                     
     return matrix
+
+#starting station is not considered in this function
+def calculate_score(information,path,start_station,connected_station)->int:
+    #calculate new connected matrix, 
+    adj_matrix= get_connected_stations_plus(information,path,connected_station)
+    matrix = get_station_shapes(information)
+    for idx,row in enumerate(adj_matrix):
+        for y, value in enumerate(row):
+            if value == 1:
+                matrix[idx] += matrix[y]
+
+    matrix = scaling_down(matrix)
+    #above would generate 10*4 matrix, that m is station,n is connected shapes
+
+    passenger_matrix = get_passengers_on_station(information)
+    score = 0
+    for idx,row in enumerate(passenger_matrix):
+        for y, passenger in enumerate(row):
+            if matrix[idx][y] >0:
+                score += passenger
+        
+    return score
+
+
+
+
+def get_connected_shape(information)->np.array:
+    #10 stations, 4 shapes
+    matrix = get_station_shapes(information)
+    adj_matrix = get_connected_stations(information)
+    
+    for idx,row in enumerate(adj_matrix):
+        for y, value in enumerate(row):
+            if value == 1:
+                matrix[idx] += matrix[y]
+    return scaling_down(matrix)
+
+#if any element in matrix is bigger than 1, change it down to 1
+def scaling_down(matrix):
+    for idx,row in enumerate(matrix):
+        for y, value in enumerate(row):
+            if value > 1:
+                matrix[idx][y] = 1
+    return matrix
+                
+
+
+

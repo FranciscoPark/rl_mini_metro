@@ -2,7 +2,7 @@
 import pygame
 import numpy as np
 
-from mediator import Mediator
+
 from state import *
 import random
 
@@ -10,7 +10,7 @@ from entity.passenger import Passenger
 from entity.path import Path
 from entity.station import Station
 
-mediator = Mediator()
+
 
 class Agent:
     def __init__(self, state, epsilon=0.1):
@@ -18,6 +18,7 @@ class Agent:
         # entities
         self.stations = self.state['stations']
         self.paths = self.state['paths'] 
+        self.paths_with_colors = self.state['paths_colorname']
         
         self.station_passengers = self.state['station_passengers']
         self.station_shapes = self.state['station_shapes']
@@ -28,7 +29,13 @@ class Agent:
         self.q_table = {action: 0 for action in self.action_space}
 
         self.epsilon = epsilon  # Exploration rate
-        
+
+    #testing new function    
+    def print_state(self):
+        print(self.paths_with_colors)
+        print(self.paths)
+        #print(make_station_index(self.state))
+
     def define_action_space(self):
         actions = []
         for station in self.stations:
@@ -56,16 +63,59 @@ class Agent:
             self.paths[path].remove(station.id)
         
         return delivery_count
+    
+    def compute_maximum_delivery_route(self)->list:
+        results = []
+        # for each color, calculate possible connections
+        for path, stations in self.paths.items():
+            if len(stations) > 1:
+                first_station = stations[0]
+                last_station = stations[-1]
+                for station in self.stations:
+                    #has to be a station.id
+                    if station.id not in stations:
+                        add_on_first= self.calculate_delivery_score(path,first_station, station)
+                        add_on_last= self.calculate_delivery_score(path,last_station,station)
+                        results.append({
+                        'score': add_on_first,
+                        'path': path,
+                        'start_station': first_station,
+                        'connected_station': station,
+                        'add_last': False
+                    })
+                        results.append({
+                            'score': add_on_last,
+                            'path': path,
+                            'start_station': last_station,
+                            'connected_station': station,
+                            'add_last': True
+                        })
+        return results
+    
+    def get_maximum_delivery_route(self)->dict:
+        results = self.compute_maximum_delivery_route()
+        #{'score': 15, 'path': 'path_a', 'start_station': 'Station-C', 
+        #'connected_station': 'Station-D'}
+        return max(results, key=lambda x: x['score'])
+    
+    def calculate_delivery_score(self,path, start_station, connected_station)->int:
+        #connected on last or first is not considered here.
+        return calculate_score(self.state, path, start_station, connected_station)
+    
+    def choose_greedy_action(self)->tuple:
+        results = self.get_maximum_delivery_route()
+        return results['path'], results['connected_station'], results['add_last']
 
     def choose_action(self): 
         if random.uniform(0, 1) < self.epsilon:
             # Explore: choose a random action
-            return random.choice(self.action_space)
+            action = random.choice(self.action_space)
+            return action[0], action[1], random.choice([True,False])
         else:
             # Exploit: choose the action with the highest Q-value
-            self.q_table = self.compute_possible_deliveries()
-            return max(self.q_table, key=self.q_table.get)
-
+            # self.q_table = self.compute_possible_deliveries()
+            # return max(self.q_table, key=self.q_table.get)
+            return self.choose_greedy_action()
 
     # def auto_decision_maker(self):
     #     # Choose an action
