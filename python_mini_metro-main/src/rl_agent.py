@@ -72,7 +72,7 @@ class Agent:
         # calculate weight vector for each station
         for station in self.stations:
             weights[station.id] = 1/(count_station_in_path(self.paths, station.id)+1e-10)
-        print(weights)
+        #print(weights)
         
         # for each color, calculate possible connections
         for path, stations in self.paths.items():
