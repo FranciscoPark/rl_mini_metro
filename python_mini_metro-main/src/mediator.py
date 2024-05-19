@@ -83,10 +83,12 @@ class Mediator:
         self.paths: List[Path] = []
         self.passengers: List[Passenger] = []
         self.path_colors: Dict[Color, bool] = {}
+        
         for i in range(num_paths):
             color = hue_to_rgb(i / (num_paths + 1))
             self.path_colors[color] = False  # not taken
         self.path_to_color: Dict[Path, Color] = {}
+    
         self.color_name: Dict[Color, str] = {(255.0, 0.0, 0.0): 'red', (0.0, 255.0, 255.0): 'blue', (127.5, 255.0, 0.0): 'green'}
         
         
@@ -353,6 +355,7 @@ class Mediator:
 
         self.find_travel_plan_for_passengers()
         self.move_passengers()
+        #print(self.save_state())
         
         
         #greedy agent
@@ -361,9 +364,12 @@ class Mediator:
             if self.steps%1000 == 10:
                 state = self.save_state()
                 agent = Agent(state, 0) # input state and Exploration rate
-                agent.print_state()
+                #agent.print_state()
                 action = agent.choose_action()
+                print(self.path_to_color)
+                print(action)
                 self.agent_add_station_to_path(action[0],action[1])
+                #self.agent_add_station_to_path(action[0],action[1],action[2])
 
 
 

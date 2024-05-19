@@ -70,6 +70,6 @@ start_with_3_initial_paths = True
 # Configurations
 running = True
 save_states = False
-human_player = False
+human_player = True
 enable_graphics = True
 greedy_agent = True
