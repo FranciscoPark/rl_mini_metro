@@ -365,11 +365,12 @@ class Mediator:
                 state = self.save_state()
                 agent = Agent(state, 0) # input state and Exploration rate
                 #agent.print_state()
-                action = agent.choose_action()
-                print(self.path_to_color)
-                print(action)
-                self.agent_add_station_to_path(action[0],action[1])
-                #self.agent_add_station_to_path(action[0],action[1],action[2])
+                #action = agent.choose_action()
+                #print(self.path_to_color)
+                #print(action)
+                #self.agent_add_station_to_path(action[0],action[1])
+                action = agent.choose_greedy_action()
+                self.agent_add_station_to_path(action[0],action[1],action[2])
 
 
 

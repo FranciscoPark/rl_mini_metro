@@ -32,7 +32,8 @@ class Agent:
 
     #testing new function    
     def print_state(self):
-        print(self.state['paths_colorname'])
+        print(self.paths_with_colors)
+        print(self.paths)
         #print(make_station_index(self.state))
 
     def define_action_space(self):
@@ -66,45 +67,44 @@ class Agent:
     def compute_maximum_delivery_route(self)->list:
         results = []
         # for each color, calculate possible connections
-        for color, stations in self.paths_with_colors.items():
+        for path, stations in self.paths.items():
             if len(stations) > 1:
                 first_station = stations[0]
                 last_station = stations[-1]
                 for station in self.stations:
-                    if station not in stations:
-                        add_on_first= calculate_delivery_score(first_station, station)
-                        add_on_last= calculate_delivery_score(last_station,station)
+                    #has to be a station.id
+                    if station.id not in stations:
+                        add_on_first= self.calculate_delivery_score(path,first_station, station)
+                        add_on_last= self.calculate_delivery_score(path,last_station,station)
                         results.append({
                         'score': add_on_first,
-                        'color': color,
+                        'path': path,
                         'start_station': first_station,
                         'connected_station': station,
                         'add_last': False
                     })
-                    results.append({
-                        'score': add_on_last,
-                        'color': color,
-                        'start_station': last_station,
-                        'connected_station': station,
-                        'add_last': True
-                    })
+                        results.append({
+                            'score': add_on_last,
+                            'path': path,
+                            'start_station': last_station,
+                            'connected_station': station,
+                            'add_last': True
+                        })
         return results
     
     def get_maximum_delivery_route(self)->dict:
         results = self.compute_maximum_delivery_route()
-        #{'score': 15, 'color': 'blue', 'start_station': 'Station-C', 
+        #{'score': 15, 'path': 'path_a', 'start_station': 'Station-C', 
         #'connected_station': 'Station-D'}
         return max(results, key=lambda x: x['score'])
-
-    # def calculate_delivery_score(self, start_station, connected_station)->int:
-    #     #connected on last or first is not considered here.
-    #     connected_matrix = get_connected_stations_plus(self.state, start_station, connected_station)
-
-    #     return
+    
+    def calculate_delivery_score(self,path, start_station, connected_station)->int:
+        #connected on last or first is not considered here.
+        return calculate_score(self.state, path, start_station, connected_station)
     
     def choose_greedy_action(self)->tuple:
         results = self.get_maximum_delivery_route()
-        return results['color'], results['connected_station'], results['add_last']
+        return results['path'], results['connected_station'], results['add_last']
 
     def choose_action(self): 
         if random.uniform(0, 1) < self.epsilon:
