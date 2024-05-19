@@ -1,5 +1,6 @@
 import random
 import torch
+import numpy as np
 
 # Define the possible actions
 ACTIONS = ['expand_line', 'delete_line', 'do_nothing']
@@ -23,7 +24,7 @@ def execute_action(state, action):
         return state, 0, False  # No change to state, zero reward, not done
 
 # Example function to expand a line (stub)
-def expand_line(state):
+def expand_line(state: np.array):
     # Logic to expand a line between two stations
     # For simplicity, assume state is updated and reward is calculated
     next_state = state  # Updated state after expanding line
@@ -32,10 +33,6 @@ def expand_line(state):
     return next_state, reward, done
 
 # Example function to delete a line (stub)
-def delete_line(state):
-    # Logic to delete an existing line between two stations
-    # For simplicity, assume state is updated and reward is calculated
-    next_state = state  # Updated state after deleting line
-    reward = -1  # Example reward
-    done = False  # Example end condition
+def delete_line(state: np.array):
+    
     return next_state, reward, done

@@ -120,12 +120,6 @@ class Mediator:
             station_to_connect = random.choice([x for x in self.stations if x not in stations])
             self.add_station_to_path(station_to_connect)
             self.end_path_on_station(station_to_connect)
-        
-
-
-
-
-
 
     def assign_paths_to_buttons(self):
         for path_button in self.path_buttons:
