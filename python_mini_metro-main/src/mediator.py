@@ -3,8 +3,10 @@ from __future__ import annotations
 import pprint
 import random
 from typing import Dict, List
-
+from rl_agent import Agent
 import pygame
+
+import numpy as np
 
 from config import (
     num_metros,
@@ -22,7 +24,8 @@ from config import (
     gameover_text_coords,
     gameover_text_center,
     start_with_3_initial_paths,
-    station_shape_type_list
+    station_shape_type_list,
+    greedy_agent
 )
 from entity.get_entity import get_random_stations
 from entity.metro import Metro
@@ -52,6 +55,10 @@ class Mediator:
     def __init__(self) -> None:
         pygame.font.init()
 
+        # set random seed
+        np.random.seed(42)
+        random.seed(42)
+        
         # configs
         self.passenger_spawning_step = passenger_spawning_start_step
         self.passenger_spawning_interval_step = passenger_spawning_interval_step
@@ -82,10 +89,12 @@ class Mediator:
         self.paths: List[Path] = []
         self.passengers: List[Passenger] = []
         self.path_colors: Dict[Color, bool] = {}
+        
         for i in range(num_paths):
             color = hue_to_rgb(i / (num_paths + 1))
             self.path_colors[color] = False  # not taken
         self.path_to_color: Dict[Path, Color] = {}
+    
         self.color_name: Dict[Color, str] = {(255.0, 0.0, 0.0): 'red', (0.0, 255.0, 255.0): 'blue', (127.5, 255.0, 0.0): 'green'}
         
         
@@ -121,12 +130,6 @@ class Mediator:
             self.add_station_to_path(station_to_connect)
             self.end_path_on_station(station_to_connect)
         
-
-
-
-
-
-
     def assign_paths_to_buttons(self):
         for path_button in self.path_buttons:
             path_button.remove_path()
@@ -197,15 +200,11 @@ class Mediator:
             if event.key == pygame.K_SPACE:
                 self.is_paused = not self.is_paused
 
-    # def rl_decision(self, game_states):
-        # game_states: score, reward, paths_adj_matrix, station_ids, ...
-
     def react(self, event: Event | None):
         if isinstance(event, MouseEvent):
             self.react_mouse_event(event)
         elif isinstance(event, KeyboardEvent):
             self.react_keyboard_event(event)
-        # self.rl_decision(game_states)
 
     def get_containing_entity(self, position: Point):
         for station in self.stations:
@@ -359,9 +358,27 @@ class Mediator:
             if self.gameover == True:
                 return
             self.steps_since_last_spawn = 0
-
+        
         self.find_travel_plan_for_passengers()
         self.move_passengers()
+        #print(self.save_state())
+        
+        
+        #greedy agent
+        if greedy_agent:
+            #steps for graphical display, steps for agent to choose action
+            if self.steps%1000 == 10:
+                state = self.save_state()
+                agent = Agent(state, 0.5) # input state and Exploration rate
+                #agent.print_state()
+                action = agent.choose_action()
+                #print(self.path_to_color)
+                #print(action)
+                #self.agent_add_station_to_path(action[0],action[1])
+                # action = agent.choose_greedy_action()
+                self.agent_add_station_to_path(action[0],action[1],action[2])
+
+
 
     def move_passengers(self) -> None:
         for metro in self.metros:
@@ -511,10 +528,12 @@ class Mediator:
         state = {
             'step': self.steps,
             'num_stations': self.num_stations,
+            'stations': [station for station in self.stations],
             'station_ids': [station.id for station in self.stations],
             'station_shapes': [str(station.shape.type) for station in self.stations],
             'station_passengers': {station.id: self.count_passengers_by_type(station) for station in self.stations},
-            'paths': {self.color_name[path.color] : [station.id for station in path.stations] for path in self.paths},
+            'paths': {path : [station.id for station in path.stations] for path in self.paths},
+            'paths_colorname': {self.color_name[path.color] : [station.id for station in path.stations] for path in self.paths},
             'path_color': [path.color for path in self.paths],
             'paths_adj_matrix': {self.color_name[path.color]: self.adjacency_matrix(path) for path in self.paths},
             'score': self.score 
@@ -545,10 +564,10 @@ class Mediator:
 
 
     def agent_add_station_to_path(self, path: Path, station_to_add: Station, add_last=True) -> None:
-        
         # delete path
-        self.remove_path(path)
-        
+        if path in self.path_to_button:
+            self.remove_path(path)
+
         # add station to path
         if add_last:
             self.start_path_on_station(path.stations[0])
