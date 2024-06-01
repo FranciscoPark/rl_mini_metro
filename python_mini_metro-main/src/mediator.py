@@ -359,9 +359,10 @@ class Mediator:
                 return
             self.steps_since_last_spawn = 0
         self.find_travel_plan_for_passengers()
+        
         self.move_passengers()
         
-        #print(self.save_state())
+        
         
         
         #greedy agent
@@ -377,6 +378,7 @@ class Mediator:
                 #self.agent_add_station_to_path(action[0],action[1])
                 # action = agent.choose_greedy_action()
                 self.agent_add_station_to_path(action[0],action[1],action[2])
+                
 
         
 
@@ -387,9 +389,9 @@ class Mediator:
                 passengers_to_remove = []
                 passengers_from_metro_to_station = []
                 passengers_from_station_to_metro = []
-
                 # queue
                 for passenger in metro.passengers:
+                    
                     if (
                         metro.current_station.shape.type
                         == passenger.destination_shape.type
@@ -401,12 +403,18 @@ class Mediator:
                     ):
                         passengers_from_metro_to_station.append(passenger)
                 for passenger in metro.current_station.passengers:
+        
                     if (
                         self.travel_plans[passenger].next_path
-                        and self.travel_plans[passenger].next_path.id == metro.path_id  # type: ignore
                     ):
-                        passengers_from_station_to_metro.append(passenger)
-
+                        if(self.travel_plans[passenger].next_path.id == metro.path_id ):
+                            passengers_from_station_to_metro.append(passenger)
+                        
+                        #bugfix for init passengers not delivered.
+                        elif(self.travel_plans[passenger].next_path.id not in self.paths):
+                            self.travel_plans[passenger] = TravelPlan([])
+                            
+                
                 # process
                 for passenger in passengers_to_remove:
                     passenger.is_at_destination = True
@@ -485,6 +493,7 @@ class Mediator:
         station_nodes_dict = build_station_nodes_dict(self.stations, self.paths)
         for station in self.stations:
             for passenger in station.passengers:
+                
                 if not self.passenger_has_travel_plan(passenger):
                     possible_dst_stations = self.get_stations_for_shape_type(
                         passenger.destination_shape.type
@@ -505,6 +514,7 @@ class Mediator:
                         elif len(node_path) > 1:
                             node_path = self.skip_stations_on_same_path(node_path)
                             self.travel_plans[passenger] = TravelPlan(node_path[1:])
+                            
                             self.find_next_path_for_passenger_at_station(
                                 passenger, station
                             )
@@ -512,6 +522,8 @@ class Mediator:
                             break
                     if should_set_null_path:
                         self.travel_plans[passenger] = TravelPlan([])
+                    
+                        
 
 
     def count_passengers_by_type(self, station: Station) -> Dict:
