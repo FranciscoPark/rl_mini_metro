@@ -358,9 +358,9 @@ class Mediator:
             if self.gameover == True:
                 return
             self.steps_since_last_spawn = 0
-        
         self.find_travel_plan_for_passengers()
         self.move_passengers()
+        
         #print(self.save_state())
         
         
@@ -378,6 +378,7 @@ class Mediator:
                 # action = agent.choose_greedy_action()
                 self.agent_add_station_to_path(action[0],action[1],action[2])
 
+        
 
 
     def move_passengers(self) -> None:
