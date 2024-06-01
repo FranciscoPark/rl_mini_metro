@@ -3,7 +3,7 @@ import pygame
 import numpy as np
 
 
-from state import *
+from state import State
 import random
 
 from entity.passenger import Passenger
@@ -30,13 +30,14 @@ class Agent:
 
         self.epsilon = epsilon  # Exploration rate
 
-    #testing new function    
-    def print_state(self):
-        print(self.state['paths'])
-        print(get_connected_stations(self.state))
-        
-        
+        #class instance
+        self.State = State(self.state)
 
+    #testing new function    
+    # def print_state(self):
+    #     print(self.state['paths'])
+    #     print(get_connected_stations(self.state))
+        
     def define_action_space(self):
         actions = []
         for station in self.stations:
@@ -53,7 +54,7 @@ class Agent:
             station_idx = action_idx//len(self.paths)
             
             # for passenger in station.passengers:
-            connected_matrix = get_connected_stations_plus(self.state, path, station)
+            connected_matrix = self.State.get_connected_stations_plus(path, station)
             connected_idcs = np.argwhere(connected_matrix==1)
             
             for connected_idx in connected_idcs:
@@ -69,9 +70,11 @@ class Agent:
         results = []
         weights = {}
         
+        
         # calculate weight vector for each station
         for station in self.stations:
-            weights[station.id] = 1/(count_station_in_path(self.paths, station.id)+1e-10)
+            
+            weights[station.id] = 1/(self.State.count_station_in_path(station.id)+1e-10)
         #print(weights)
         
         # for each color, calculate possible connections
@@ -111,7 +114,7 @@ class Agent:
 
     def calculate_delivery_score(self,path, start_station, connected_station)->int:
         #connected on last or first is not considered here.
-        return calculate_score(self.state, path, start_station, connected_station)
+        return self.State.calculate_score(path, start_station, connected_station)
     
     def choose_greedy_action(self)->tuple:
         results = self.get_maximum_delivery_route()
