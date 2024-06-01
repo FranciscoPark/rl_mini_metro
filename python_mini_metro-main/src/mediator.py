@@ -374,6 +374,29 @@ class Mediator:
 
         elif a3c_agent:
             pass
+            #example code
+            # env = gym.make("CartPole-v1")
+            # state_dim = env.observation_space.shape[0]
+            # action_dim = env.action_space.n
+            # agent = ActorCriticAgent(state_dim, action_dim)
+
+            # num_episodes = 1000
+
+            # for episode in range(num_episodes):
+            #     state = env.reset()
+            #     done = False
+            #     episode_reward = 0
+
+            #     while not done:
+            #         action = agent.select_action(state)
+            #         next_state, reward, done, _ = env.step(action)
+                    
+            #         agent.train(state, action, reward, next_state, done)
+                    
+            #         state = next_state
+            #         episode_reward += reward
+
+            
 
         
 
