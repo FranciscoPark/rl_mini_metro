@@ -56,8 +56,8 @@ class Mediator:
         pygame.font.init()
 
         # set random seed
-        # np.random.seed(42)
-        # random.seed(42)
+        np.random.seed(42)
+        random.seed(42)
         
         # configs
         self.passenger_spawning_step = passenger_spawning_start_step
@@ -369,7 +369,7 @@ class Mediator:
             #steps for graphical display, steps for agent to choose action
             if self.steps%1000 == 10:
                 state = self.save_state()
-                agent = Agent(state, 1) # input state and Exploration rate
+                agent = Agent(state, 0) # input state and Exploration rate
                 #agent.print_state()
                 action = agent.choose_action()
                 #print(self.path_to_color)

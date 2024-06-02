@@ -108,8 +108,9 @@ class Agent:
         results = self.compute_maximum_delivery_route()
         #{'score': 15, 'path': 'path_a', 'start_station': 'Station-C', 
         #'connected_station': 'Station-D'}
-        return max(results, key=lambda x: x['score'])
-        # return max(results, key=lambda x: x['weighted_score'])
+        print(results)
+        # return max(results, key=lambda x: x['score'])
+        return max(results, key=lambda x: x['weighted_score'])
 
     def calculate_delivery_score(self, path, start_station, connected_station)->int:
         #connected on last or first is not considered here.
