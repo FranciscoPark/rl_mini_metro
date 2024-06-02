@@ -3,7 +3,7 @@ import pygame
 import numpy as np
 
 
-from state import *
+from state import State
 import random
 
 from entity.passenger import Passenger
@@ -25,25 +25,43 @@ class Agent:
         self.paths_adj_matrix = self.state['paths_adj_matrix'] # only direct connection
         
         # Q-table, state, and action space
-        self.action_space = self.define_action_space()
+        self.action_space = self.define_action_space(mode='exploit')
+        self.action_space_explore = self.define_action_space(mode='explore')
         self.q_table = {action: 0 for action in self.action_space}
 
         self.epsilon = epsilon  # Exploration rate
 
-    #testing new function    
-    def print_state(self):
-        print(self.state['paths'])
-        print(get_connected_stations(self.state))
-        
-        
+        #class instance
+        self.State = State(self.state)
 
-    def define_action_space(self):
+    #testing new function    
+    # def print_state(self):
+    #     print(self.state['paths'])
+    #     print(get_connected_stations(self.state))
+        
+    def define_action_space(self,mode):
         actions = []
-        for station in self.stations:
+        
+        if not self.stations or not self.paths:
+            return actions
+
+        if mode=='exploit':
+            for station in self.stations:
+                for path in self.paths.keys():
+                    # only add stations not in the path 
+                    if station.id not in self.paths[path]:
+                        actions.append((path, station)) # action to draw line to a station using a path 
+        elif mode=='explore':
+            actions.append({'observe':0})
             for path in self.paths.keys():
-                # exclude stations already in the path ?
-                if station.id not in self.paths[path]:
-                    actions.append((path, station)) # action to draw line to a station using a path 
+                actions.extend([{'delete':(path, True)},{'delete':(path, False)}])
+                for station in self.stations:
+                    # only add stations not in the path 
+                    if station.id not in self.paths[path]:
+                        actions.append({'add':(path, station)}) # action to draw line to a station using a path 
+                    # only delete first or last stations in the path
+                    # elif station.id==self.paths[path][0] | station.id==self.paths[path][-1]:
+                    #     actions.append({'delete':(path, station)})
         return actions
     
     def compute_possible_deliveries(self):
@@ -53,7 +71,7 @@ class Agent:
             station_idx = action_idx//len(self.paths)
             
             # for passenger in station.passengers:
-            connected_matrix = get_connected_stations_plus(self.state, path, station)
+            connected_matrix = self.State.get_connected_stations_plus(path, station)
             connected_idcs = np.argwhere(connected_matrix==1)
             
             for connected_idx in connected_idcs:
@@ -69,9 +87,11 @@ class Agent:
         results = []
         weights = {}
         
+        
         # calculate weight vector for each station
         for station in self.stations:
-            weights[station.id] = 1/(count_station_in_path(self.paths, station.id)+1e-10)
+            weights[station.id] = 1/(self.State.count_station_in_path(station.id)+1e-10)
+        #print(weights)
         
         # for each color, calculate possible connections
         for path, stations in self.paths.items():
@@ -83,8 +103,8 @@ class Agent:
                     if station.id not in stations:
                         # add_on_first= self.calculate_delivery_score(path,first_station, station)
                         # add_on_last= self.calculate_delivery_score(path,last_station,station)
-                        add_on_first = calculate_score(self.state, path, first_station, station)
-                        add_on_last = calculate_score(self.state, path, last_station, station)
+                        add_on_first = self.State.calculate_score(path, first_station, station)
+                        add_on_last = self.State.calculate_score(path, last_station, station)
 
                         results.append({
                         'score': add_on_first,
@@ -108,13 +128,13 @@ class Agent:
         results = self.compute_maximum_delivery_route()
         #{'score': 15, 'path': 'path_a', 'start_station': 'Station-C', 
         #'connected_station': 'Station-D'}
-        print(results)
+        # print(results)
         # return max(results, key=lambda x: x['score'])
         return max(results, key=lambda x: x['weighted_score'])
 
     def calculate_delivery_score(self, path, start_station, connected_station)->int:
         #connected on last or first is not considered here.
-        return calculate_score(self.state, path, start_station, connected_station)
+        return self.State.calculate_score(path, start_station, connected_station)
     
     def choose_greedy_action(self)->tuple:
         results = self.get_maximum_delivery_route()
@@ -124,8 +144,9 @@ class Agent:
     def choose_action(self): 
         if random.uniform(0, 1) < self.epsilon:
             # Explore: choose a random action
-            action = random.choice(self.action_space)
-            return action[0], action[1], random.choice([True,False])
+            action = random.choice(self.action_space_explore)
+            # return action[0], action[1], random.choice([True,False])
+            return action.popitem() #key, value
         else:
             # Exploit: choose the action with the highest Q-value
             # self.q_table = self.compute_possible_deliveries()

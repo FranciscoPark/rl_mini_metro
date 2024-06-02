@@ -25,7 +25,8 @@ from config import (
     gameover_text_center,
     start_with_3_initial_paths,
     station_shape_type_list,
-    greedy_agent
+    greedy_agent,
+    a3c_agent
 )
 from entity.get_entity import get_random_stations
 from entity.metro import Metro
@@ -358,26 +359,56 @@ class Mediator:
             if self.gameover == True:
                 return
             self.steps_since_last_spawn = 0
-        
         self.find_travel_plan_for_passengers()
-        self.move_passengers()
-        #print(self.save_state())
         
+        self.move_passengers()
         
         #greedy agent
         if greedy_agent:
             #steps for graphical display, steps for agent to choose action
             if self.steps%1000 == 10:
                 state = self.save_state()
-                agent = Agent(state, 0) # input state and Exploration rate
-                #agent.print_state()
+                agent = Agent(state, 1) # input state and Exploration rate
                 action = agent.choose_action()
-                #print(self.path_to_color)
-                #print(action)
-                #self.agent_add_station_to_path(action[0],action[1])
-                # action = agent.choose_greedy_action()
-                self.agent_add_station_to_path(action[0],action[1],action[2])
+                if len(action)==3: #exploit
+                    self.agent_add_station_to_path(action[0],action[1],action[2])
+                else: #explore
+                    if action[0]=='observe': #key
+                        print('observe')
+                        pass
+                    elif action[0]=='delete':
+                        print('delete')
+                        self.agent_delete_station_from_path(action[1][0], action[1][1])
+                    elif action[0]=='add':
+                        self.agent_add_station_to_path(action[1][0],action[1][1],random.choice([True,False]))
 
+        elif a3c_agent:
+            pass
+            #example code
+            # env = gym.make("CartPole-v1")
+            # state_dim = env.observation_space.shape[0]
+            # action_dim = env.action_space.n
+            # agent = ActorCriticAgent(state_dim, action_dim)
+
+            # num_episodes = 1000
+
+            # for episode in range(num_episodes):
+            #     state = env.reset()
+            #     done = False
+            #     episode_reward = 0
+
+            #     while not done:
+            #         action = agent.select_action(state)
+            #         next_state, reward, done, _ = env.step(action)
+                    
+            #         agent.train(state, action, reward, next_state, done)
+                    
+            #         state = next_state
+            #         episode_reward += reward
+
+            
+
+        
 
 
     def move_passengers(self) -> None:
@@ -386,9 +417,9 @@ class Mediator:
                 passengers_to_remove = []
                 passengers_from_metro_to_station = []
                 passengers_from_station_to_metro = []
-
                 # queue
                 for passenger in metro.passengers:
+                    
                     if (
                         metro.current_station.shape.type
                         == passenger.destination_shape.type
@@ -400,12 +431,18 @@ class Mediator:
                     ):
                         passengers_from_metro_to_station.append(passenger)
                 for passenger in metro.current_station.passengers:
+        
                     if (
                         self.travel_plans[passenger].next_path
-                        and self.travel_plans[passenger].next_path.id == metro.path_id  # type: ignore
                     ):
-                        passengers_from_station_to_metro.append(passenger)
-
+                        if(self.travel_plans[passenger].next_path.id == metro.path_id ):
+                            passengers_from_station_to_metro.append(passenger)
+                        
+                        #bugfix for init passengers not delivered.
+                        elif(self.travel_plans[passenger].next_path.id not in self.paths):
+                            self.travel_plans[passenger] = TravelPlan([])
+                            
+                
                 # process
                 for passenger in passengers_to_remove:
                     passenger.is_at_destination = True
@@ -484,6 +521,7 @@ class Mediator:
         station_nodes_dict = build_station_nodes_dict(self.stations, self.paths)
         for station in self.stations:
             for passenger in station.passengers:
+                
                 if not self.passenger_has_travel_plan(passenger):
                     possible_dst_stations = self.get_stations_for_shape_type(
                         passenger.destination_shape.type
@@ -504,6 +542,7 @@ class Mediator:
                         elif len(node_path) > 1:
                             node_path = self.skip_stations_on_same_path(node_path)
                             self.travel_plans[passenger] = TravelPlan(node_path[1:])
+                            
                             self.find_next_path_for_passenger_at_station(
                                 passenger, station
                             )
@@ -511,6 +550,8 @@ class Mediator:
                             break
                     if should_set_null_path:
                         self.travel_plans[passenger] = TravelPlan([])
+                    
+                        
 
 
     def count_passengers_by_type(self, station: Station) -> Dict:
@@ -581,6 +622,23 @@ class Mediator:
                 self.add_station_to_path(station)
             self.end_path_on_station(path.stations[-1])
     
+    def agent_delete_station_from_path(self, path: Path, delete_first: bool) -> None:
+        # delete the whole path
+        if path in self.path_to_button:
+            self.remove_path(path)
+
+        # delete first station from path
+        if delete_first:
+            self.start_path_on_station(path.stations[1])
+            for station in path.stations[2:-1]:
+                self.add_station_to_path(station)
+            self.end_path_on_station(path.stations[-1])
+
+        else: # delete last station from path
+            self.start_path_on_station(path.stations[0])
+            for station in path.stations[1:-2]:
+                self.add_station_to_path(station)
+            self.end_path_on_station(path.stations[-2])
     
     def available_actions(self):
         """ Returns the available actions for the current state"""
