@@ -42,14 +42,15 @@ from type import Color
 from ui.button import Button
 from ui.path_button import PathButton, get_path_buttons
 from utils import get_shape_from_type, hue_to_rgb
-
+import torch
+from torch_geometric.data import Data
 
 TravelPlans = Dict[Passenger, TravelPlan]
 pp = pprint.PrettyPrinter(indent=4)
 
 
 class Mediator:
-    def __init__(self) -> None:
+    def __init__(self, seed=1) -> None:
         pygame.font.init()
 
         # configs
@@ -111,7 +112,8 @@ class Mediator:
         return not self.gameover
     
     #initialize with 3 paths
-    def initialize_with_3_paths(self):
+    def initialize_with_3_paths(self, seed=1):
+        random.seed(seed)
         #randomly choose 3 stations
         stations = random.sample(self.stations, 3)
         for station in stations:
@@ -121,12 +123,6 @@ class Mediator:
             self.add_station_to_path(station_to_connect)
             self.end_path_on_station(station_to_connect)
         
-
-
-
-
-
-
     def assign_paths_to_buttons(self):
         for path_button in self.path_buttons:
             path_button.remove_path()
@@ -139,9 +135,9 @@ class Mediator:
             self.path_to_button[path] = button
 
     def render(self, screen: pygame.surface.Surface) -> None:
-        if self.gameover == True:
-            self.display_gameover(screen)
-            return
+        # if self.gameover == True:
+        #     self.display_gameover(screen)
+        #     return
         for idx, path in enumerate(self.paths):
             path_order = idx - round(self.num_paths / 2)
             path.draw(screen, path_order)
@@ -539,8 +535,6 @@ class Mediator:
         return adjacency_matrix
 
 
-
-
     def agent_add_station_to_path(self, path: Path, station_to_add: Station, add_last=True) -> None:
         
         # delete path
@@ -560,6 +554,158 @@ class Mediator:
             self.end_path_on_station(path.stations[-1])
     
     
-    def available_actions(self):
-        """ Returns the available actions for the current state"""
-        pass
+    def initialize_action_mapping(self):
+        action_mapping = []
+        current_paths = {self.color_name[path.color] : [station.id for station in path.stations] for path in self.paths}
+        for line_color in ['red', 'blue', 'green']:
+            assert len(current_paths[line_color]) == 2
+            for station in self.stations:
+                if station.id not in current_paths[line_color]:
+                    action_mapping.append((line_color, station))
+        self.action_mapping = action_mapping
+    
+
+    def available_actions(self, mask=True):
+        """ Returns a mask of the available actions for the current state - OBS: Currently only appending actions to the path is implemented
+        Args:
+            mask List[int]: Whether to return the mask as a list of 1 and 0
+                            If False, returns a list of available indices
+        
+        """
+        actions = []
+        k = 0
+        current_paths = {self.color_name[path.color] : [station.id for station in path.stations] for path in self.paths}
+        for i, line in enumerate(['red', 'blue', 'green']):
+            for j, station in enumerate(self.stations):
+                # skip if initial stations
+                if station.id in current_paths[line][:2]:
+                    continue
+                
+                # else determine whether available
+                available = int(station.id not in current_paths[line])
+                if mask:
+                    actions.append(available)
+                else:
+                    if available:
+                        actions.append(k)
+                    k += 1
+                
+
+        return actions
+
+
+    def select_action(self, action_index: int):
+        """ Selects an action based on the action index"""
+        line_color, station = self.action_mapping[action_index]
+        path = [path for path in self.paths if self.color_name[path.color] == line_color][0]
+        self.agent_add_station_to_path(path, station)     
+
+
+    def edge_matrix(self, path: Path):
+        """ Creates an edge matrix for a given path """
+        station_id_to_index = {station.id: i for i, station in enumerate(self.stations)}
+        edge_from = []
+        edge_to = []
+
+        for i in range(len(path.stations) - 1):
+            start_station = path.stations[i]
+            next_station = path.stations[i + 1]
+            start_index = station_id_to_index[start_station.id]
+            next_index = station_id_to_index[next_station.id]
+            
+            # append both ways as graph is undirected
+            edge_from.append(start_index)
+            edge_to.append(next_index)
+            edge_from.append(next_index)
+            edge_to.append(start_index)
+
+        edge_index = torch.tensor([edge_from,
+                                   edge_to], dtype=torch.long)
+        return edge_index
+
+    def attribute_matrix(self):
+        """ Creates an attribute matrix for the graph. Each node has attribute of 5 elements: [station-shape (dummy variable), circle-passengers, triangle-passengers, square-passengers, cross-passengers"""
+        attributes = []
+        type_map = {'ShapeType.RECT': [1,0,0], 'ShapeType.CIRCLE': [0,1,0], 'ShapeType.TRIANGLE': [0,0,1], 'ShapeType.CROSS': [0,0,0]}
+        #n_available = len(self.available_actions(mask=False))
+        for station in self.stations:
+            x = []
+
+            # add passenger count
+            x.extend(type_map[str(station.shape.type)])
+            for key, value in self.count_passengers_by_type(station).items():
+                x.append(value)
+
+            # add number of available actions
+            #x.append(n_available)
+
+
+            attributes.append(x)
+        assert len(attributes) == len(self.stations)
+        
+        attribute_matrix = torch.tensor(attributes, dtype=torch.float)
+        return attribute_matrix
+
+
+    def state(self):
+        graphs = {}
+        for path in self.paths:
+            edge_matrix = self.edge_matrix(path)
+            attribute_matrix = self.attribute_matrix()
+            graphs[self.color_name[path.color]] = Data(x=attribute_matrix, edge_index=edge_matrix)
+
+        # masking 
+        mask = torch.tensor(self.available_actions(mask=True), dtype=torch.bool)
+        return graphs, mask
+        
+         
+    def step(self, action, reward_type='score'):
+        """ Takes a step in the environment"""
+        # note down current score
+        terminated = False
+        previous_score = self.score
+        
+        # select action
+        self.select_action(action)
+
+        # run frames until next state
+        for t in range(500):
+            if self.gameover:
+                terminated = True
+                break
+            self.increment_time(16)
+        # save state, reward and action
+        state = self.state()
+        if reward_type == 'score':
+            reward = self.score - previous_score
+        else:
+            reward = 1
+        
+        return state, reward, terminated
+    
+    def step_to_end(self, action, reward_type='score'):
+        """ Sims to end if all actions are taken"""
+        # note down current score
+        previous_score = self.score
+
+        self.select_action(action)
+        
+        # run frames until end (not infinite loop as the game in theory can be solved - but enough to accumulate a very large reward)
+        for reward in range(100):
+            if self.gameover:
+                break
+
+            for t in range(500):
+                if self.gameover:
+                    break
+                self.increment_time(16)
+
+        # save state, reward and action
+        terminated = True
+        state = self.state()
+        if reward_type == 'score':
+            reward = (self.score - previous_score) * (self.score > 60)
+        else:
+            reward = reward + 1
+        return state, reward, terminated
+    
