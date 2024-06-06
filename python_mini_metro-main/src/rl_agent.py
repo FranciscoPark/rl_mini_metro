@@ -29,7 +29,7 @@ class Agent:
         self.q_table = {action: 0 for action in self.action_space}
 
         self.epsilon = epsilon  # Exploration rate
-
+        self.action_cnt =0
         #class instance
         self.State = State(self.state)
 
@@ -122,6 +122,10 @@ class Agent:
         return results['path'], results['connected_station'], results['add_last']
 
     def choose_action(self): 
+        #dont do anything after 24 actions
+        if self.action_cnt == 24:
+            return
+        self.action_cnt += 1
         if random.uniform(0, 1) < self.epsilon:
             # Explore: choose a random action
             action = random.choice(self.action_space)
