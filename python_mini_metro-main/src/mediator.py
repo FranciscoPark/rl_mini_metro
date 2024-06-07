@@ -27,6 +27,7 @@ from config import (
     station_shape_type_list,
     greedy_agent,
     a3c_agent,
+    epsilon,
     random_seed
 )
 from entity.get_entity import get_random_stations
@@ -111,7 +112,7 @@ class Mediator:
         self.travel_plans: TravelPlans = {}
         self.is_paused = False
         self.score = 0
-
+        self.epsilon = epsilon
     #gameover
     def display_gameover(self, screen: pygame.surface.Surface) -> None:
         gameover_font = pygame.font.SysFont("arial", self.gameover_font_size)
