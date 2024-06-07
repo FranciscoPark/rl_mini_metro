@@ -76,3 +76,4 @@ enable_graphics = True
 greedy_agent = True
 a3c_agent = False
 num_action = 24
+epsilon =0

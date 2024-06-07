@@ -26,7 +26,8 @@ from config import (
     start_with_3_initial_paths,
     station_shape_type_list,
     greedy_agent,
-    a3c_agent
+    a3c_agent,
+    epsilon
 )
 from entity.get_entity import get_random_stations
 from entity.metro import Metro
@@ -110,7 +111,7 @@ class Mediator:
         self.travel_plans: TravelPlans = {}
         self.is_paused = False
         self.score = 0
-
+        self.epsilon = epsilon
     #gameover
     def display_gameover(self, screen: pygame.surface.Surface) -> None:
         gameover_font = pygame.font.SysFont("arial", self.gameover_font_size)
@@ -368,7 +369,7 @@ class Mediator:
             #steps for graphical display, steps for agent to choose action
             if self.steps%1000 == 10:
                 state = self.save_state()
-                agent = Agent(state, 0) # input state and Exploration rate
+                agent = Agent(state, self.epsilon) # input state and Exploration rate
                 action = agent.choose_action()
                 self.agent_add_station_to_path(action[0],action[1],action[2])
 
