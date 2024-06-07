@@ -51,7 +51,6 @@ while running:
     if human_player:
         for pygame_event in pygame.event.get():
             if pygame_event.type == pygame.QUIT:
-
                 raise SystemExit
             else:
                 event = convert_pygame_event(pygame_event)

@@ -144,9 +144,12 @@ class Agent:
     def choose_action(self): 
         if random.uniform(0, 1) < self.epsilon:
             # Explore: choose a random action
-            action = random.choice(self.action_space_explore)
-            # return action[0], action[1], random.choice([True,False])
+            # option = random.choice(['add','delete','observe']) # choose option
+            # action = random.choice([item for item in self.action_space_explore if option in item]) # choose action
+            action = random.choice(self.action_space_explore) # choose action
             return action.popitem() #key, value
+            # action = random.choice(self.action_space)
+            # return action[0], action[1], random.choice([True,False])
         else:
             # Exploit: choose the action with the highest Q-value
             # self.q_table = self.compute_possible_deliveries()

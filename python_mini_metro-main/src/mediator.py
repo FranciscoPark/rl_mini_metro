@@ -26,7 +26,8 @@ from config import (
     start_with_3_initial_paths,
     station_shape_type_list,
     greedy_agent,
-    a3c_agent
+    a3c_agent,
+    random_seed
 )
 from entity.get_entity import get_random_stations
 from entity.metro import Metro
@@ -57,8 +58,8 @@ class Mediator:
         pygame.font.init()
 
         # set random seed
-        np.random.seed(42)
-        random.seed(42)
+        np.random.seed(random_seed)
+        random.seed(random_seed)
         
         # configs
         self.passenger_spawning_step = passenger_spawning_start_step
@@ -357,6 +358,7 @@ class Mediator:
             self.spawn_passengers()
             #if gameover
             if self.gameover == True:
+                print('Final score: ',self.score)
                 return
             self.steps_since_last_spawn = 0
         self.find_travel_plan_for_passengers()
@@ -368,6 +370,17 @@ class Mediator:
             #steps for graphical display, steps for agent to choose action
             if self.steps%1000 == 10:
                 state = self.save_state()
+                
+                # game over after all stations are linked
+                # all_values = state['paths'].values()
+                # flattened_values = [station_id for sublist in all_values for station_id in sublist]
+                # union_of_station_ids = set(flattened_values)
+
+                # if union_of_station_ids == set(self.stations):
+                #     self.gameover = True
+                #     print('all stations are linked!')
+                #     return
+                
                 agent = Agent(state, 1) # input state and Exploration rate
                 action = agent.choose_action()
                 if len(action)==3: #exploit
