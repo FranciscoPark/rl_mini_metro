@@ -11,7 +11,7 @@ screen_color = (255, 255, 255)
 # station
 num_stations = 10
 station_size = 15
-station_capacity = 8
+station_capacity = 12
 station_color = (0, 0, 0)
 station_shape_type_list = [
     ShapeType.RECT,
@@ -74,4 +74,5 @@ human_player = True
 enable_graphics = True
 greedy_agent = True
 a3c_agent = False
+num_action = 24
 random_seed = 2

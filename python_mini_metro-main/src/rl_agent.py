@@ -9,6 +9,7 @@ import random
 from entity.passenger import Passenger
 from entity.path import Path
 from entity.station import Station
+from config import num_action
 
 
 
@@ -30,7 +31,7 @@ class Agent:
         self.q_table = {action: 0 for action in self.action_space}
 
         self.epsilon = epsilon  # Exploration rate
-
+        self.action_cnt =num_action
         #class instance
         self.State = State(self.state)
 
@@ -142,6 +143,10 @@ class Agent:
         return results['path'], results['connected_station'], results['add_last']
 
     def choose_action(self): 
+        #dont do anything after 24 or 12 actions
+        if self.action_cnt == 0:
+            return
+        self.action_cnt -= 1
         if random.uniform(0, 1) < self.epsilon:
             # Explore: choose a random action
             # option = random.choice(['add','delete','observe']) # choose option
