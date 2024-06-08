@@ -382,15 +382,15 @@ class Mediator:
                 #     print('all stations are linked!')
                 #     return
                 
-                agent = Agent(state, 1) # input state and Exploration rate
+                agent = Agent(state, self.epsilon) # input state and Exploration rate
                 action = agent.choose_action()
                 if len(action)==3: #exploit
                     self.agent_add_station_to_path(action[0],action[1],action[2])
                 else: #explore
-                    if action[0]=='observe': #key
-                        print('observe')
-                        pass
-                    elif action[0]=='delete':
+                    # if action[0]=='observe': #key
+                    #     print('observe')
+                    #     pass
+                    if action[0]=='delete':
                         print('delete')
                         self.agent_delete_station_from_path(action[1][0], action[1][1])
                     elif action[0]=='add':

@@ -53,7 +53,7 @@ class Agent:
                     if station.id not in self.paths[path]:
                         actions.append((path, station)) # action to draw line to a station using a path 
         elif mode=='explore':
-            actions.append({'observe':0})
+            # actions.append({'observe':0})
             for path in self.paths.keys():
                 actions.extend([{'delete':(path, True)},{'delete':(path, False)}])
                 for station in self.stations:
