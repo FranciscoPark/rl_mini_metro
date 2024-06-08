@@ -57,7 +57,8 @@ pp = pprint.PrettyPrinter(indent=4)
 class Mediator:
     def __init__(self) -> None:
         pygame.font.init()
-
+        
+        self.seed =9
         # set random seed
         np.random.seed(random_seed)
         random.seed(random_seed)
@@ -145,9 +146,7 @@ class Mediator:
             self.path_to_button[path] = button
 
     def render(self, screen: pygame.surface.Surface) -> None:
-        if self.gameover == True:
-            self.display_gameover(screen)
-            return
+        
         for idx, path in enumerate(self.paths):
             path_order = idx - round(self.num_paths / 2)
             path.draw(screen, path_order)
@@ -160,6 +159,10 @@ class Mediator:
             
         text_surface = self.font.render(f"Score: {self.score}", True, (0, 0, 0))
         screen.blit(text_surface, score_display_coords)
+        if self.gameover == True:
+            pygame.image.save(screen, f"screenshot_{self.seed}_{self.score}.png")
+            self.display_gameover(screen)
+            return
         
 
     def react_mouse_event(self, event: MouseEvent):
@@ -358,6 +361,9 @@ class Mediator:
         if self.is_passenger_spawn_time():
             self.spawn_passengers()
             #if gameover
+            if self.score >=300:
+                print("solved")
+                self.gameover = True
             if self.gameover == True:
                 print('Final score: ',self.score)
                 return
