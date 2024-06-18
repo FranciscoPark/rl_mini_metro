@@ -28,7 +28,8 @@ from config import (
     greedy_agent,
     a3c_agent,
     epsilon,
-    random_seed
+    random_seed,
+    num_action
 )
 from entity.get_entity import get_random_stations
 from entity.metro import Metro
@@ -86,7 +87,7 @@ class Mediator:
         self.gameover = False
 
 
-
+        self.num_action= num_action
         # entities
         self.stations = get_random_stations(self.num_stations)
         self.metros: List[Metro] = []
@@ -160,7 +161,7 @@ class Mediator:
         text_surface = self.font.render(f"Score: {self.score}", True, (0, 0, 0))
         screen.blit(text_surface, score_display_coords)
         if self.gameover == True:
-            pygame.image.save(screen, f"screenshot_{self.seed}_{self.score}.png")
+            pygame.image.save(screen, f"screenshot_{self.num_action}_{self.epsilon}_{self.seed}_{self.score}.png")
             self.display_gameover(screen)
             return
         
@@ -362,7 +363,7 @@ class Mediator:
             self.spawn_passengers()
             #if gameover
             if self.score >=300:
-                print("solved")
+                print('solved,Final score: ',self.score)
                 self.gameover = True
             if self.gameover == True:
                 print('Final score: ',self.score)
@@ -397,7 +398,7 @@ class Mediator:
                     #     print('observe')
                     #     pass
                     if action[0]=='delete':
-                        print('delete')
+                        #print('delete')
                         self.agent_delete_station_from_path(action[1][0], action[1][1])
                     elif action[0]=='add':
                         self.agent_add_station_to_path(action[1][0],action[1][1],random.choice([True,False]))
