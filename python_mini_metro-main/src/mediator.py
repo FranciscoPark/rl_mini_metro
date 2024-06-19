@@ -3,8 +3,10 @@ from __future__ import annotations
 import pprint
 import random
 from typing import Dict, List
-
+from rl_agent import Agent
 import pygame
+
+import numpy as np
 
 from config import (
     num_metros,
@@ -22,7 +24,8 @@ from config import (
     gameover_text_coords,
     gameover_text_center,
     start_with_3_initial_paths,
-    station_shape_type_list
+    station_shape_type_list,
+    greedy_agent
 )
 from entity.get_entity import get_random_stations
 from entity.metro import Metro
@@ -87,10 +90,12 @@ class Mediator:
         self.paths: List[Path] = []
         self.passengers: List[Passenger] = []
         self.path_colors: Dict[Color, bool] = {}
+        
         for i in range(num_paths):
             color = hue_to_rgb(i / (num_paths + 1))
             self.path_colors[color] = False  # not taken
         self.path_to_color: Dict[Path, Color] = {}
+    
         self.color_name: Dict[Color, str] = {(255.0, 0.0, 0.0): 'red', (0.0, 255.0, 255.0): 'blue', (127.5, 255.0, 0.0): 'green'}
         
         
@@ -354,9 +359,30 @@ class Mediator:
             if self.gameover == True:
                 return
             self.steps_since_last_spawn = 0
-
         self.find_travel_plan_for_passengers()
+        
         self.move_passengers()
+        
+        
+        
+        
+        #greedy agent
+        if greedy_agent:
+            #steps for graphical display, steps for agent to choose action
+            if self.steps%1000 == 10:
+                state = self.save_state()
+                agent = Agent(state, 0) # input state and Exploration rate
+                #agent.print_state()
+                action = agent.choose_action()
+                #print(self.path_to_color)
+                #print(action)
+                #self.agent_add_station_to_path(action[0],action[1])
+                # action = agent.choose_greedy_action()
+                self.agent_add_station_to_path(action[0],action[1],action[2])
+                
+
+        
+
 
     def move_passengers(self) -> None:
         for metro in self.metros:
@@ -364,9 +390,9 @@ class Mediator:
                 passengers_to_remove = []
                 passengers_from_metro_to_station = []
                 passengers_from_station_to_metro = []
-
                 # queue
                 for passenger in metro.passengers:
+                    
                     if (
                         metro.current_station.shape.type
                         == passenger.destination_shape.type
@@ -378,12 +404,18 @@ class Mediator:
                     ):
                         passengers_from_metro_to_station.append(passenger)
                 for passenger in metro.current_station.passengers:
+        
                     if (
                         self.travel_plans[passenger].next_path
-                        and self.travel_plans[passenger].next_path.id == metro.path_id  # type: ignore
                     ):
-                        passengers_from_station_to_metro.append(passenger)
-
+                        if(self.travel_plans[passenger].next_path.id == metro.path_id ):
+                            passengers_from_station_to_metro.append(passenger)
+                        
+                        #bugfix for init passengers not delivered.
+                        elif(self.travel_plans[passenger].next_path.id not in self.paths):
+                            self.travel_plans[passenger] = TravelPlan([])
+                            
+                
                 # process
                 for passenger in passengers_to_remove:
                     passenger.is_at_destination = True
@@ -462,6 +494,7 @@ class Mediator:
         station_nodes_dict = build_station_nodes_dict(self.stations, self.paths)
         for station in self.stations:
             for passenger in station.passengers:
+                
                 if not self.passenger_has_travel_plan(passenger):
                     possible_dst_stations = self.get_stations_for_shape_type(
                         passenger.destination_shape.type
@@ -482,6 +515,7 @@ class Mediator:
                         elif len(node_path) > 1:
                             node_path = self.skip_stations_on_same_path(node_path)
                             self.travel_plans[passenger] = TravelPlan(node_path[1:])
+                            
                             self.find_next_path_for_passenger_at_station(
                                 passenger, station
                             )
@@ -489,6 +523,8 @@ class Mediator:
                             break
                     if should_set_null_path:
                         self.travel_plans[passenger] = TravelPlan([])
+                    
+                        
 
 
     def count_passengers_by_type(self, station: Station) -> Dict:
@@ -500,17 +536,18 @@ class Mediator:
                 count[shape] += 1
         return count
     
-    
-    
+
     
     def save_state(self) -> Dict:
         state = {
             'step': self.steps,
             'num_stations': self.num_stations,
+            'stations': [station for station in self.stations],
             'station_ids': [station.id for station in self.stations],
             'station_shapes': [str(station.shape.type) for station in self.stations],
             'station_passengers': {station.id: self.count_passengers_by_type(station) for station in self.stations},
-            'paths': {self.color_name[path.color] : [station.id for station in path.stations] for path in self.paths},
+            'paths': {path : [station.id for station in path.stations] for path in self.paths},
+            'paths_colorname': {self.color_name[path.color] : [station.id for station in path.stations] for path in self.paths},
             'path_color': [path.color for path in self.paths],
             'paths_adj_matrix': {self.color_name[path.color]: self.adjacency_matrix(path) for path in self.paths},
             'score': self.score 
@@ -539,10 +576,10 @@ class Mediator:
 
 
     def agent_add_station_to_path(self, path: Path, station_to_add: Station, add_last=True) -> None:
-        
         # delete path
-        self.remove_path(path)
-        
+        if path in self.path_to_button:
+            self.remove_path(path)
+
         # add station to path
         if add_last:
             self.start_path_on_station(path.stations[0])
