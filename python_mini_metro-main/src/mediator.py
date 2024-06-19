@@ -44,7 +44,7 @@ from ui.path_button import PathButton, get_path_buttons
 from utils import get_shape_from_type, hue_to_rgb
 import torch
 from torch_geometric.data import Data
-
+import numpy as np
 TravelPlans = Dict[Passenger, TravelPlan]
 pp = pprint.PrettyPrinter(indent=4)
 
@@ -52,6 +52,10 @@ pp = pprint.PrettyPrinter(indent=4)
 class Mediator:
     def __init__(self, seed=1) -> None:
         pygame.font.init()
+
+        # set random seed
+        np.random.seed(seed)
+        random.seed(seed)
 
         # configs
         self.passenger_spawning_step = passenger_spawning_start_step
@@ -112,8 +116,7 @@ class Mediator:
         return not self.gameover
     
     #initialize with 3 paths
-    def initialize_with_3_paths(self, seed=1):
-        random.seed(seed)
+    def initialize_with_3_paths(self):
         #randomly choose 3 stations
         stations = random.sample(self.stations, 3)
         for station in stations:
@@ -636,6 +639,9 @@ class Mediator:
             for key, value in self.count_passengers_by_type(station).items():
                 x.append(value)
 
+            # add station position
+            x.extend([station.position.left, station.position.top])
+
             # add number of available actions
             #x.append(n_available)
 
@@ -677,7 +683,7 @@ class Mediator:
         # save state, reward and action
         state = self.state()
         if reward_type == 'score':
-            reward = self.score - previous_score
+            reward = self.score - previous_score #* (self.score > 50)
         else:
             reward = 1
         
@@ -691,12 +697,13 @@ class Mediator:
         self.select_action(action)
         
         # run frames until end (not infinite loop as the game in theory can be solved - but enough to accumulate a very large reward)
-        for reward in range(100):
-            if self.gameover:
+        while True:
+            if self.gameover or self.score >= 300:
                 break
-
+            
+            # increment time
             for t in range(500):
-                if self.gameover:
+                if self.gameover or self.score >= 300:
                     break
                 self.increment_time(16)
 
@@ -704,7 +711,7 @@ class Mediator:
         terminated = True
         state = self.state()
         if reward_type == 'score':
-            reward = (self.score - previous_score) * (self.score > 60)
+            reward = self.score - previous_score
         else:
             reward = reward + 1
         return state, reward, terminated

@@ -14,9 +14,7 @@ def get_random_station() -> Station:
     return Station(shape, position)
 
 
-def get_random_stations(num: int, seed=1) -> List[Station]:
-    random.seed(seed)
-    np.random.seed(seed)
+def get_random_stations(num: int) -> List[Station]:
     stations: List[Station] = []
     for _ in range(num):
         #changed so no overlapping positions

@@ -14,6 +14,7 @@ import torch.nn.functional as F
 # graph pytorch
 from torch_geometric.data import Data
 from torch_geometric.nn import GCNConv
+from torch_geometric.nn.norm import GraphNorm
 
 
 Transition = namedtuple('Transition',
@@ -50,12 +51,13 @@ class DQL_GCN(torch.nn.Module):
         self.conv2 = GCNConv(4, 1)
         self.ff1 = torch.nn.Linear(num_stations*3, 64)
         self.ff2 = torch.nn.Linear(64, n_actions)
+        self.norm = GraphNorm(num_node_features)
 
     def forward(self, red_graph, blue_graph, green_graph, mask, batch_size=5):
         # run convolution on each graph
-        x_red, edge_index_red = red_graph.x, red_graph.edge_index
-        x_blue, edge_index_blue = blue_graph.x, blue_graph.edge_index
-        x_green, edge_index_green = green_graph.x, green_graph.edge_index
+        x_red, edge_index_red = self.norm(red_graph.x), red_graph.edge_index
+        x_blue, edge_index_blue = self.norm(blue_graph.x), blue_graph.edge_index
+        x_green, edge_index_green = self.norm(green_graph.x), green_graph.edge_index
         
         # first convolution
         x_red = F.relu(self.conv1(x_red, edge_index_red))#.reshape(5, self.num_node_features)     # 5 in batch, X features
