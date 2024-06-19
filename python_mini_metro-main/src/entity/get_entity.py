@@ -5,7 +5,8 @@ from entity.metro import Metro
 from entity.station import Station
 from utils import get_random_position, get_random_station_shape
 from geometry.utils import distance
-
+import random
+import numpy as np
 
 def get_random_station() -> Station:
     shape = get_random_station_shape()

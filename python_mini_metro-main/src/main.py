@@ -32,7 +32,7 @@ while running:
     if start_with_3_initial_paths:
         mediator.initialize_with_3_paths()
         start_with_3_initial_paths = False
-
+    print(dt_ms)
     mediator.increment_time(dt_ms)
     if enable_graphics:
         screen.fill(screen_color)
